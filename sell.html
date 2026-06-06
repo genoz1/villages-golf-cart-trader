@@ -28,11 +28,6 @@
 
       <div class="form-grid" id="step1">
 
-        <div class="form-group full">
-          <label>Listing Title *</label>
-          <input class="field" id="fTitle" placeholder="e.g. 2022 Club Car Onward Lithium – 4 Passenger">
-        </div>
-
         <div class="form-group">
           <label>Make *</label>
           <select class="field" id="fMake">
@@ -188,7 +183,6 @@
     <p>Your listing is ready. Complete payment to publish it.</p>
     <div style="background:#f4f8f6;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:20px" id="reviewSummary"></div>
 
-    <!-- Listing type selector -->
     <div style="margin-bottom:20px">
       <label style="font-weight:700;font-size:14px;display:block;margin-bottom:10px">Choose listing type:</label>
       <div style="display:flex;gap:10px">
@@ -225,7 +219,6 @@ document.getElementById('nav-root').innerHTML = renderNav('sell.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-// Check if user came back after cancelling Stripe checkout
 if(new URLSearchParams(location.search).get('cancelled')) {
   showToast('Payment cancelled — your listing details are still here.');
 }
@@ -257,7 +250,7 @@ function handlePhotos(input) {
 
 function submitListing() {
   const required = {
-    fTitle: 'Listing title', fMake: 'Make', fModel: 'Model', fYear: 'Year',
+    fMake: 'Make', fModel: 'Model', fYear: 'Year',
     fPrice: 'Price', fPower: 'Power type', fSeats: 'Seats',
     fLocation: 'Location', fDesc: 'Description', fName: 'Your name', fEmail: 'Email',
   };
@@ -268,16 +261,17 @@ function submitListing() {
       return;
     }
   }
+  const autoTitle = `${document.getElementById('fYear').value} ${document.getElementById('fMake').value} ${document.getElementById('fModel').value}`;
   const summary = document.getElementById('reviewSummary');
   summary.innerHTML = `
-    <div style="font-weight:700;font-size:16px;margin-bottom:8px">${document.getElementById('fTitle').value}</div>
+    <div style="font-weight:700;font-size:16px;margin-bottom:8px">${autoTitle}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
       <span class="muted">Price</span><span><strong>$${parseInt(document.getElementById('fPrice').value).toLocaleString()}</strong></span>
       <span class="muted">Make / Model</span><span>${document.getElementById('fMake').value} ${document.getElementById('fModel').value}</span>
       <span class="muted">Year / Power</span><span>${document.getElementById('fYear').value} · ${document.getElementById('fPower').value}</span>
       <span class="muted">Location</span><span>${document.getElementById('fLocation').value}, FL</span>
     </div>`;
-  selectType('private'); // reset selection
+  selectType('private');
   openModal('payModal');
 }
 
@@ -288,7 +282,6 @@ async function confirmPayment() {
   btn.textContent = 'Redirecting to Stripe…';
   errEl.style.display = 'none';
 
-  // Collect photo files and upload first (if any)
   let photoUrls = [];
   const photoInput = document.getElementById('photoUpload');
   if(photoInput.files.length > 0) {
@@ -298,13 +291,11 @@ async function confirmPayment() {
       const upRes = await fetch('/api/upload-photos', { method: 'POST', body: formData });
       const upData = await upRes.json();
       if(upData.urls) photoUrls = upData.urls;
-    } catch(e) {
-      // photos optional — continue without them
-    }
+    } catch(e) {}
   }
 
   const listing = {
-    title:    document.getElementById('fTitle').value,
+    title:    `${document.getElementById('fYear').value} ${document.getElementById('fMake').value} ${document.getElementById('fModel').value}`,
     make:     document.getElementById('fMake').value,
     model:    document.getElementById('fModel').value,
     year:     document.getElementById('fYear').value,
@@ -326,7 +317,7 @@ async function confirmPayment() {
     });
     const data = await res.json();
     if(data.url) {
-      window.location.href = data.url;   // → Stripe Checkout
+      window.location.href = data.url;
     } else {
       throw new Error(data.error || 'Could not create checkout session');
     }
