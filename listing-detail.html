@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Listing Detail | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+<section class="page-hero" id="pageHero">
+  <div class="inner">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>›</span><a href="listings.html">Browse Carts</a><span>›</span><span id="heroTitle">Loading…</span></div>
+    <h1 id="heroH1">Loading…</h1>
+    <p id="heroSub"></p>
+  </div>
+</section>
+
+<main class="container">
+  <div class="split" id="mainContent" style="display:none">
+
+    <!-- LEFT: Photos -->
+    <div>
+      <div class="photo-main" id="photoMain" style="overflow:hidden"></div>
+      <div class="thumbs">
+        <div class="thumb">🛺</div>
+        <div class="thumb">📸</div>
+        <div class="thumb">📸</div>
+        <div class="thumb">📸</div>
+      </div>
+      <div class="panel" style="margin-top:20px">
+        <h3 style="margin-bottom:12px">Description</h3>
+        <p id="listingDesc" style="line-height:1.7;color:var(--muted);font-size:15px"></p>
+      </div>
+    </div>
+
+    <!-- RIGHT: Details -->
+    <div>
+      <div class="panel" style="position:sticky;top:80px">
+        <span class="tag" id="listingTag">Local Listing</span>
+        <div class="price" id="listingPrice"></div>
+        <p id="listingLocation" class="muted" style="font-size:14px;margin-bottom:16px"></p>
+
+        <div class="detail-grid" id="detailGrid"></div>
+
+        <div style="margin-top:22px;display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-gold btn-lg" onclick="openModal('contactModal')">📞 Contact Seller</button>
+          <button class="btn btn-light" onclick="openModal('shareModal')">🔗 Share Listing</button>
+        </div>
+
+        <div class="renewal-box" style="margin-top:20px">
+          <p style="font-size:13px;color:var(--muted)">🔒 Never share personal info before meeting in a safe, public location.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMILAR LISTINGS -->
+  <div style="margin-top:52px">
+    <div class="section-head">
+      <h2>Similar Listings</h2>
+      <a href="listings.html" class="btn btn-light">View all</a>
+    </div>
+    <div class="grid grid-3" id="similarGrid"></div>
+  </div>
+</main>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('contactModal')">✕</button>
+    <h2>Contact Seller</h2>
+    <p>Send a message to the seller. They'll reply to your email directly.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <input class="field" placeholder="Your name" id="cName">
+      <input class="field" placeholder="Your email" id="cEmail" type="email">
+      <input class="field" placeholder="Your phone (optional)" id="cPhone" type="tel">
+      <textarea class="field" rows="4" placeholder="Message…" id="cMsg">I'm interested in your listing. Is it still available?</textarea>
+      <button class="btn btn-gold" onclick="sendContact()">Send Message</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+    <h2>Share This Listing</h2>
+    <p>Copy the link below to share this golf cart listing.</p>
+    <div style="display:flex;gap:10px">
+      <input class="field" id="shareUrl" readonly style="flex:1">
+      <button class="btn btn-green" onclick="copyShare()">Copy</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('listings.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+const id = getListingId();
+const listing = LISTINGS.find(l => l.id === id) || LISTINGS[0];
+
+// populate main photo
+const photoMain = document.getElementById('photoMain');
+if(listing.photo) {
+  photoMain.innerHTML = `<img src="${listing.photo}" alt="${listing.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
+} else {
+  photoMain.textContent = '🛺';
+}
+
+// populate page hero
+document.title = `${listing.title} | Villages Golf Cart Trader`;
+document.getElementById('heroTitle').textContent = listing.title;
+document.getElementById('heroH1').textContent = listing.title;
+document.getElementById('heroSub').textContent = `📍 ${listing.location}, FL · ${listing.type === 'Featured' ? '⭐ Featured Listing' : 'Private Seller'}`;
+
+// populate main content
+document.getElementById('mainContent').style.display = '';
+document.getElementById('listingTag').textContent = listing.type === 'Featured' ? '⭐ Featured' : 'Local Listing';
+if(listing.type === 'Featured') document.getElementById('listingTag').className = 'tag tag-gold';
+document.getElementById('listingPrice').textContent = fmt(listing.price);
+document.getElementById('listingLocation').textContent = `📍 ${listing.location}, FL`;
+document.getElementById('listingDesc').textContent = listing.desc;
+document.getElementById('shareUrl').value = location.href;
+
+const details = [
+  ['Year', listing.year],
+  ['Make', listing.make],
+  ['Model', listing.model],
+  ['Power', listing.power],
+  ['Seats', listing.seats],
+  ['Street Legal', 'Yes'],
+  ['Location', listing.location + ', FL'],
+  ['Seller Type', 'Private Seller'],
+];
+document.getElementById('detailGrid').innerHTML = details.map(([k,v]) =>
+  `<div class="detail-item"><strong>${k}</strong><span>${v}</span></div>`
+).join('');
+
+// similar listings (same make or power, exclude current)
+const similar = LISTINGS.filter(l => l.id !== id && (l.make === listing.make || l.power === listing.power)).slice(0,3);
+document.getElementById('similarGrid').innerHTML = similar.map(l => `
+  <article class="card">
+    <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
+    <div class="card-body">
+      <span class="tag">${l.type==='Featured'?'⭐ Featured':'Local Listing'}</span>
+      <h3 style="font-size:15px;margin:6px 0">${l.title}</h3>
+      <div class="price">${fmt(l.price)}</div>
+      <p class="muted" style="font-size:13px">📍 ${l.location}, FL</p>
+      <div style="margin-top:12px"><a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View</a></div>
+    </div>
+  </article>`).join('');
+
+function sendContact() {
+  const name = document.getElementById('cName').value;
+  const email = document.getElementById('cEmail').value;
+  if(!name || !email) { showToast('Please fill in your name and email.'); return; }
+  closeModal('contactModal');
+  showToast(`✅ Message sent! The seller will reply to ${email}.`);
+}
+
+function copyShare() {
+  navigator.clipboard.writeText(location.href).then(()=> showToast('✅ Link copied!'));
+}
+</script>
+</body>
+</html>

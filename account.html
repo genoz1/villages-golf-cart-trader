@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Account | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero">
+  <div class="inner">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> My Account</div>
+    <h1>My Listings</h1>
+    <p>Seller dashboard — manage, renew, edit, or mark your carts as sold.</p>
+  </div>
+</section>
+
+<main class="container">
+
+  <!-- STATUS FILTER TABS -->
+  <div class="status-grid" id="statusTabs">
+    <div class="status-pill active" onclick="filterStatus('')">All Listings</div>
+    <div class="status-pill" onclick="filterStatus('Active')">Active</div>
+    <div class="status-pill" onclick="filterStatus('Expiring')">Expiring Soon</div>
+    <div class="status-pill" onclick="filterStatus('Expired')">Expired</div>
+    <div class="status-pill" onclick="filterStatus('Sold')">Sold</div>
+  </div>
+
+  <!-- LISTINGS -->
+  <div id="accountListings"></div>
+
+  <!-- RENEWAL RULES BOX -->
+  <div class="renewal-box" style="margin-top:32px">
+    <h3 style="margin-bottom:12px">📅 Automatic Renewal Rules</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <strong style="font-size:14px">Private Sellers</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6">No automatic charges. Listings expire after 30 days unless you choose to renew. Expired listings stay saved here for easy renewal.</p>
+      </div>
+      <div>
+        <strong style="font-size:14px">Email Reminders</strong>
+        <p style="font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6">You'll receive reminders 7 days before, 3 days before, and on the expiration day. Each reminder includes a one-click renewal link.</p>
+      </div>
+    </div>
+    <div style="background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px">
+      <strong style="font-size:13px;display:block;margin-bottom:6px">📧 Sample reminder email</strong>
+      <p style="font-size:13px;color:var(--muted)">Subject: <em>Your golf cart listing expires in 3 days</em></p>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px">"Your listing for <strong>2020 EZGO RXV Electric</strong> on Villages Golf Cart Trader expires on [date]. Renew now to keep it visible to buyers."</p>
+      <button class="btn btn-gold btn-sm" style="margin-top:10px" onclick="showToast('Demo: In the live site this button in the email renews your listing.')">Renew Listing</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- MARK SOLD MODAL -->
+<div class="modal-overlay" id="soldModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('soldModal')">✕</button>
+    <h2>Mark as Sold?</h2>
+    <p>This will hide your listing from public search. It will remain saved here in case you need it again.</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-green" onclick="confirmSold()">Yes, Mark Sold</button>
+      <button class="btn btn-light" onclick="closeModal('soldModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('account.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+// Demo account listings
+const myListings = [
+  { ...LISTINGS[0], accountStatus: 'Active' },
+  { ...LISTINGS[1], accountStatus: 'Expiring' },
+  { id:99, title:'2019 Club Car DS Electric', price:5500, make:'Club Car', model:'DS', year:2019, power:'Electric', seats:4, location:'The Villages', photo:'https://www.peeblesgolfcars.com/cdn/shop/products/2019-Club-Car-Precedent-Lime-Green-Electric-4-Seater.jpg', daysLeft:0, accountStatus:'Expired' },
+  { id:98, title:'2018 EZGO TXT Gas', price:4200, make:'EZGO', model:'TXT', year:2018, power:'Gas', seats:2, location:'Wildwood', photo:'https://premiumqualitygolfcart.com/cdn/shop/products/2018-EZGO-TXT-Electric-2.jpg', daysLeft:0, accountStatus:'Sold' },
+];
+
+let currentFilter = '';
+let pendingSoldId = null;
+
+function filterStatus(status) {
+  currentFilter = status;
+  document.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  renderListings();
+}
+
+function renderListings() {
+  const filtered = currentFilter
+    ? myListings.filter(l => l.accountStatus === currentFilter)
+    : myListings;
+
+  const container = document.getElementById('accountListings');
+  if(filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📋</div><h3>No listings here</h3><p>You have no ${currentFilter.toLowerCase()} listings.</p><a href="sell.html" class="btn btn-gold">Post a Cart</a></div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(l => {
+    const pct = Math.min(100, Math.max(0, (l.daysLeft / 30) * 100));
+    const fillClass = l.daysLeft <= 3 ? 'warn' : l.daysLeft === 0 ? 'expired' : '';
+    const statusClass = l.accountStatus === 'Active' ? '' : l.accountStatus === 'Expiring' ? 'tag-gold' : l.accountStatus === 'Expired' ? 'tag-red' : 'tag-blue';
+    const statusEmoji = l.accountStatus === 'Active' ? '✅' : l.accountStatus === 'Expiring' ? '⏰' : l.accountStatus === 'Expired' ? '❌' : '🏷️';
+
+    const actions = l.accountStatus === 'Active' || l.accountStatus === 'Expiring' ? `
+      <button class="btn btn-green btn-sm" onclick="window.location='sell.html'">Edit</button>
+      <button class="btn btn-light btn-sm" onclick="markSold(${l.id})">Mark Sold</button>
+      <a href="listing-detail.html?id=${l.id}" class="btn btn-light btn-sm">Preview</a>
+    ` : l.accountStatus === 'Expired' ? `
+      <button class="btn btn-gold btn-sm" onclick="renewListing(${l.id})">Renew for $9.99</button>
+      <a href="listing-detail.html?id=${l.id}" class="btn btn-light btn-sm">Preview</a>
+    ` : `<span style="font-size:13px;color:var(--muted)">Listing sold — archived</span>`;
+
+    return `
+    <div class="listing-row">
+      <div class="listing-row-thumb" style="overflow:hidden;border-radius:10px"><img src="${l.photo || ''}" alt="${l.title}" onerror="this.style.display='none';this.parentElement.textContent='🛺'" style="width:100%;height:100%;object-fit:cover"></div>
+      <div class="listing-row-body" style="flex:1">
+        <span class="tag ${statusClass}" style="margin-bottom:4px">${statusEmoji} ${l.accountStatus}</span>
+        <h3>${l.title}</h3>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:4px">
+          <span class="price" style="font-size:18px">${fmt(l.price)}</span>
+          ${l.accountStatus !== 'Sold' ? `<span style="font-size:13px;color:var(--muted)">${l.daysLeft > 0 ? l.daysLeft + ' days remaining' : 'Expired'}</span>` : ''}
+        </div>
+        ${l.accountStatus !== 'Sold' && l.accountStatus !== 'Expired' ? `
+        <div class="days-bar">
+          <div class="days-track"><div class="days-fill ${fillClass}" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">${l.daysLeft}/30 days</span>
+        </div>` : ''}
+        <div class="listing-row-actions">${actions}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markSold(id) {
+  pendingSoldId = id;
+  openModal('soldModal');
+}
+function confirmSold() {
+  const l = myListings.find(x => x.id === pendingSoldId);
+  if(l) l.accountStatus = 'Sold';
+  closeModal('soldModal');
+  renderListings();
+  showToast('✅ Listing marked as sold!');
+}
+function renewListing(id) {
+  const l = myListings.find(x => x.id === id);
+  if(l) { l.accountStatus = 'Active'; l.daysLeft = 30; }
+  renderListings();
+  showToast('🎉 Listing renewed for 30 days!');
+}
+
+renderListings();
+</script>
+</body>
+</html>

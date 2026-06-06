@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Listing Published | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero" style="background:linear-gradient(135deg,#052e23,var(--green2))">
+  <div class="inner" style="text-align:center;color:white">
+    <div style="font-size:64px;margin-bottom:16px">🎉</div>
+    <h1 style="color:white">Your listing is live!</h1>
+    <p style="color:#c8ecd6;max-width:480px;margin:0 auto">
+      Your golf cart has been published to the marketplace. Buyers in The Villages can now find it.
+    </p>
+  </div>
+</section>
+
+<main class="container" style="max-width:680px">
+
+  <div class="panel" id="confirmDetails" style="margin-bottom:24px">
+    <div id="loadingMsg" style="text-align:center;padding:24px;color:var(--muted)">
+      Loading your listing details…
+    </div>
+  </div>
+
+  <div class="panel" style="background:linear-gradient(145deg,#f4faf7,white)">
+    <h3 style="margin-bottom:14px">📋 What happens next</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:14px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px">📬</span>
+        <span><strong>Buyers reach you directly</strong> — interested buyers send you a message through the listing form. Your phone and email stay private.</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px">⏰</span>
+        <span><strong>You'll get reminder emails</strong> — at 7 days, 3 days, and on the expiration day so you can renew or let it expire.</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px">✏️</span>
+        <span><strong>Edit anytime</strong> — update the price, description, photos, or mark your cart as sold from your account dashboard.</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap">
+    <a href="listings.html" class="btn btn-green btn-lg">Browse All Listings</a>
+    <a href="account.html" class="btn btn-light btn-lg">My Account</a>
+  </div>
+
+</main>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+const params    = new URLSearchParams(location.search);
+const listingId = params.get('listing');
+
+async function loadConfirmation() {
+  const box = document.getElementById('confirmDetails');
+  if (!listingId) {
+    box.innerHTML = '<p class="muted" style="text-align:center;padding:16px">Listing confirmed. Check your email for details.</p>';
+    return;
+  }
+  try {
+    const res  = await fetch(`/api/listing/${listingId}`);
+    if (!res.ok) throw new Error('not found');
+    const l    = await res.json();
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <span class="tag tag-green" style="font-size:13px">✅ Active — 30 days remaining</span>
+        <span style="font-size:13px;color:var(--muted)">Listing #${l.id}</span>
+      </div>
+      <h2 style="font-size:20px;margin-bottom:6px">${l.title}</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:14px;margin-top:10px">
+        <span class="muted">Make / Model</span><span>${l.make} ${l.model}</span>
+        <span class="muted">Year</span><span>${l.year}</span>
+        <span class="muted">Power</span><span>${l.power}</span>
+        <span class="muted">Seats</span><span>${l.seats}</span>
+        <span class="muted">Location</span><span>${l.location}, FL</span>
+        <span class="muted">Asking Price</span><span><strong>$${Number(l.price).toLocaleString()}</strong></span>
+      </div>`;
+  } catch {
+    box.innerHTML = `
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <h3>Payment confirmed!</h3>
+        <p class="muted">Your listing is being activated. Check your email for a confirmation with your listing details.</p>
+      </div>`;
+  }
+}
+
+loadConfirmation();
+</script>
+</body>
+</html>

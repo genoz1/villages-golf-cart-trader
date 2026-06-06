@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dealers | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero">
+  <div class="inner">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Dealers</div>
+    <h1>Local Dealer Inventory</h1>
+    <p>Golf cart dealers serving The Villages, Wildwood, Lady Lake, Oxford, and Leesburg.</p>
+  </div>
+</section>
+
+<main class="container">
+
+  <div class="grid grid-3" id="dealerGrid"></div>
+
+  <!-- BECOME A DEALER -->
+  <div style="margin-top:52px;background:linear-gradient(145deg,#052e23,var(--green2));border-radius:28px;padding:44px 40px;color:white;display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center">
+    <div>
+      <h2 style="font-size:34px;letter-spacing:-.04em;margin-bottom:10px">Become a Founding Dealer</h2>
+      <p style="color:#c8ecd6;font-size:16px;line-height:1.6;max-width:500px">Introductory dealer packages are available for early local partners. Get your inventory in front of the most active golf cart buyers in Central Florida.</p>
+      <div class="specs" style="margin-top:16px">
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">Unlimited listings</span>
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">Dealer profile page</span>
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">$49/month</span>
+      </div>
+    </div>
+    <div>
+      <a href="contact.html" class="btn btn-gold btn-lg">Request Info</a>
+    </div>
+  </div>
+
+</main>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('dealers.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+document.getElementById('dealerGrid').innerHTML = DEALERS.map(d => `
+  <div class="card">
+    <div class="card-body">
+      <div class="dealer-logo">${d.initials}</div>
+      <h3 style="font-size:18px;margin-bottom:4px">${d.name}</h3>
+      <p class="muted" style="font-size:14px;margin-bottom:4px">📍 ${d.location}</p>
+      <p class="muted" style="font-size:14px;margin-bottom:12px">📞 ${d.phone}</p>
+      <p style="font-size:14px;margin-bottom:16px">${d.tagline}</p>
+      <div class="specs" style="margin-bottom:16px">
+        <span>${d.inventory} active listings</span>
+      </div>
+      <a class="btn btn-green btn-sm" href="listings.html">View Inventory</a>
+    </div>
+  </div>`).join('') + `
+  <div class="card" style="border:2px dashed var(--line);background:#fafcfb">
+    <div class="card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:240px">
+      <div style="font-size:40px;margin-bottom:12px">🏪</div>
+      <h3 style="font-size:17px;margin-bottom:8px">Become a Dealer</h3>
+      <p class="muted" style="font-size:14px;line-height:1.5;margin-bottom:18px">Join local dealers reaching the most active golf cart buyers in The Villages.</p>
+      <a href="contact.html" class="btn btn-gold btn-sm">Request Info</a>
+    </div>
+  </div>`;
+</script>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Home | Villages Golf Cart Trader</title>
+  <meta name="description" content="Buy and sell golf carts in The Villages, FL. The paid local marketplace for private sellers and dealers.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge fade-up">📍 Serving The Villages &amp; surrounding communities</div>
+      <h1 class="fade-up fade-up-1">Buy &amp; Sell Golf Carts in <em>The Villages</em></h1>
+      <p class="hero-sub fade-up fade-up-2">Browse paid local listings from private sellers and dealers across The Villages, Wildwood, Lady Lake, Oxford, and Leesburg.</p>
+      <div class="searchbox fade-up fade-up-3">
+        <input id="heroSearch" placeholder="Search make, model, keyword…" type="text">
+        <select id="heroPrice">
+          <option value="">Any Price</option>
+          <option value="5000">Under $5,000</option>
+          <option value="10000">$5,000–$10,000</option>
+          <option value="99999">$10,000+</option>
+        </select>
+        <select id="heroPower">
+          <option value="">Any Power</option>
+          <option value="Electric">Electric</option>
+          <option value="Lithium">Lithium</option>
+          <option value="Gas">Gas</option>
+        </select>
+        <button class="btn btn-gold" onclick="heroSearch()">Search</button>
+      </div>
+    </div>
+    <div class="hero-visual fade-up fade-up-4">
+      <img src="assets/hero-logo.png" alt="Villages Golf Cart Trader">
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED LISTINGS -->
+<section class="container">
+  <div class="section-head">
+    <div>
+      <h2>Featured Golf Carts</h2>
+      <p class="muted" style="margin-top:4px">Paid featured listings from local sellers</p>
+    </div>
+    <a href="listings.html" class="btn btn-light">View all listings</a>
+  </div>
+  <div class="grid grid-3" id="featuredGrid"></div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="background:white; border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+  <div class="container">
+    <div class="section-head">
+      <h2>How It Works</h2>
+    </div>
+    <div class="grid grid-3 steps" id="stepsGrid"></div>
+  </div>
+</section>
+
+<!-- WHY + PRICING TEASER -->
+<section class="container">
+  <div class="split">
+    <div class="panel">
+      <h2 style="margin-bottom:14px">Why sellers choose this marketplace</h2>
+      <p class="muted" style="line-height:1.7;margin-bottom:16px">Facebook listings get buried fast and attract tire-kickers from everywhere. Villages Golf Cart Trader is built specifically for golf carts — with the right filters, local focus, and paid-only listings that keep quality high.</p>
+      <div class="specs">
+        <span>No clutter</span>
+        <span>Golf cart–specific filters</span>
+        <span>Local buyers only</span>
+        <span>Private sellers + dealers</span>
+        <span>Photo-rich listings</span>
+      </div>
+    </div>
+    <div class="panel" style="background:linear-gradient(145deg,#052e23,var(--green2));color:white;border:none;">
+      <p style="font-size:13px;font-weight:700;color:#8bd45f;margin-bottom:4px">LAUNCH PRICING</p>
+      <h2 style="font-size:38px;letter-spacing:-.04em;margin-bottom:4px">$9.99</h2>
+      <p style="color:#c8ecd6;margin-bottom:20px;font-size:15px">30-day private seller listing with up to 20 photos. No auto-renew.</p>
+      <a href="sell.html" class="btn btn-gold btn-lg">Post Your Cart Today</a>
+    </div>
+  </div>
+</section>
+
+<!-- LATEST LISTINGS -->
+<section style="background:white;border-top:1px solid var(--line);">
+  <div class="container">
+    <div class="section-head">
+      <h2>Latest Listings</h2>
+      <a href="listings.html" class="btn btn-light">Browse all</a>
+    </div>
+    <div class="grid grid-3" id="latestGrid"></div>
+  </div>
+</section>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('index.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+function makeCard(l, showFeatured) {
+  return `
+  <article class="card fade-up">
+    <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
+    <div class="card-body">
+      ${showFeatured && l.type==='Featured' ? '<span class="tag tag-gold">⭐ Featured</span>' : '<span class="tag">Local Listing</span>'}
+      <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
+      <div class="price">${fmt(l.price)}</div>
+      <p class="muted" style="font-size:13px;margin-bottom:8px">📍 ${l.location}, FL</p>
+      <div class="specs">
+        <span>${l.year}</span>
+        <span>${l.power}</span>
+        <span>${l.seats} Seats</span>
+        <span>Street Legal</span>
+      </div>
+      <div style="margin-top:14px">
+        <a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View Listing</a>
+      </div>
+    </div>
+  </article>`;
+}
+
+// featured
+const featured = LISTINGS.filter(l => l.type === 'Featured');
+document.getElementById('featuredGrid').innerHTML = featured.map(l => makeCard(l, true)).join('');
+
+// steps
+const steps = [
+  { title:'Post Your Cart', desc:'Upload photos, enter details, pay the listing fee, and publish automatically. Takes about 5 minutes.' },
+  { title:'Reach Local Buyers', desc:'Your listing reaches people specifically looking for golf carts in The Villages and surrounding communities.' },
+  { title:'Edit Anytime', desc:'Update price, description, photos, or mark the cart sold from your account dashboard at any time.' },
+];
+document.getElementById('stepsGrid').innerHTML = steps.map(s =>
+  `<div class="step-card"><h3>${s.title}</h3><p>${s.desc}</p></div>`
+).join('');
+
+// latest (non-featured, first 3)
+const latest = LISTINGS.filter(l => l.type !== 'Featured').slice(0, 3);
+document.getElementById('latestGrid').innerHTML = latest.map(l => makeCard(l, false)).join('');
+
+function heroSearch() {
+  const kw = document.getElementById('heroSearch').value;
+  const pw = document.getElementById('heroPower').value;
+  const params = new URLSearchParams();
+  if(kw) params.set('q', kw);
+  if(pw) params.set('power', pw);
+  window.location.href = 'listings.html' + (params.toString() ? '?' + params.toString() : '');
+}
+document.getElementById('heroSearch').addEventListener('keypress', e => { if(e.key==='Enter') heroSearch(); });
+</script>
+</body>
+</html>

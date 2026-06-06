@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Browse Listings | Villages Golf Cart Trader</title>
+  <meta name="description" content="Browse golf carts for sale in The Villages, Lady Lake, Wildwood, Oxford, and Leesburg, FL.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero">
+  <div class="inner">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Browse Carts</div>
+    <h1>Browse Golf Carts</h1>
+    <p>Search local carts for sale in The Villages and surrounding communities.</p>
+  </div>
+</section>
+
+<main class="container">
+
+  <!-- FILTER BAR -->
+  <div class="filterbar">
+    <input class="field" id="fKeyword" placeholder="Search keyword, make, model…" type="text">
+    <select class="field" id="fMake">
+      <option value="">Any Make</option>
+      <option>Club Car</option>
+      <option>EZGO</option>
+      <option>Yamaha</option>
+      <option>ICON</option>
+      <option>Evolution</option>
+    </select>
+    <select class="field" id="fPower">
+      <option value="">Any Power</option>
+      <option>Electric</option>
+      <option>Lithium</option>
+      <option>Gas</option>
+    </select>
+    <select class="field" id="fSeats">
+      <option value="">Any Seats</option>
+      <option value="2">2 Seats</option>
+      <option value="4">4 Seats</option>
+      <option value="6">6 Seats</option>
+    </select>
+    <button class="btn btn-green" onclick="applyFilters()">Filter</button>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <p class="muted" id="resultsCount" style="font-size:14px"></p>
+    <select class="field" id="fSort" style="width:auto;padding:8px 14px;font-size:13px" onchange="applyFilters()">
+      <option value="default">Sort: Newest</option>
+      <option value="price-asc">Price: Low to High</option>
+      <option value="price-desc">Price: High to Low</option>
+      <option value="year-desc">Year: Newest First</option>
+    </select>
+  </div>
+
+  <!-- RESULTS GRID -->
+  <div class="grid grid-3" id="listingsGrid"></div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <h3>No carts match your filters</h3>
+    <p>Try adjusting your search or clearing the filters.</p>
+    <button class="btn btn-green" onclick="clearFilters()">Clear Filters</button>
+  </div>
+
+</main>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('listings.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+// Pre-fill from URL params
+const params = new URLSearchParams(location.search);
+if(params.get('q')) document.getElementById('fKeyword').value = params.get('q');
+if(params.get('power')) document.getElementById('fPower').value = params.get('power');
+if(params.get('make')) document.getElementById('fMake').value = params.get('make');
+
+function makeCard(l) {
+  const isExpiring = l.daysLeft <= 3;
+  const tagHtml = l.type === 'Featured'
+    ? '<span class="tag tag-gold">⭐ Featured</span>'
+    : isExpiring ? '<span class="tag tag-red">⏰ Expiring Soon</span>'
+    : '<span class="tag">Local Listing</span>';
+  return `
+  <article class="card">
+    <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
+    <div class="card-body">
+      ${tagHtml}
+      <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
+      <div class="price">${fmt(l.price)}</div>
+      <p class="muted" style="font-size:13px;margin-bottom:8px">📍 ${l.location}, FL</p>
+      <div class="specs">
+        <span>${l.year}</span>
+        <span>${l.power}</span>
+        <span>${l.seats} Seats</span>
+        <span>Street Legal</span>
+      </div>
+      <div style="margin-top:14px">
+        <a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View Details</a>
+      </div>
+    </div>
+  </article>`;
+}
+
+function applyFilters() {
+  const kw = document.getElementById('fKeyword').value.toLowerCase();
+  const make = document.getElementById('fMake').value;
+  const power = document.getElementById('fPower').value;
+  const seats = document.getElementById('fSeats').value;
+  const sort = document.getElementById('fSort').value;
+
+  let results = LISTINGS.filter(l => l.status === 'Active');
+  if(kw) results = results.filter(l =>
+    l.title.toLowerCase().includes(kw) || l.make.toLowerCase().includes(kw) || l.model.toLowerCase().includes(kw) || l.location.toLowerCase().includes(kw)
+  );
+  if(make) results = results.filter(l => l.make === make);
+  if(power) results = results.filter(l => l.power === power);
+  if(seats) results = results.filter(l => l.seats === parseInt(seats));
+
+  if(sort === 'price-asc') results.sort((a,b) => a.price - b.price);
+  else if(sort === 'price-desc') results.sort((a,b) => b.price - a.price);
+  else if(sort === 'year-desc') results.sort((a,b) => b.year - a.year);
+  else results.sort((a,b) => (b.type==='Featured'?1:0) - (a.type==='Featured'?1:0));
+
+  const grid = document.getElementById('listingsGrid');
+  const empty = document.getElementById('emptyState');
+
+  if(results.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = '';
+  } else {
+    grid.innerHTML = results.map(makeCard).join('');
+    empty.style.display = 'none';
+  }
+  document.getElementById('resultsCount').textContent = `${results.length} listing${results.length!==1?'s':''} found`;
+}
+
+function clearFilters() {
+  document.getElementById('fKeyword').value = '';
+  document.getElementById('fMake').value = '';
+  document.getElementById('fPower').value = '';
+  document.getElementById('fSeats').value = '';
+  applyFilters();
+}
+
+// Enter key search
+document.getElementById('fKeyword').addEventListener('keypress', e => { if(e.key==='Enter') applyFilters(); });
+
+applyFilters();
+</script>
+</body>
+</html>
