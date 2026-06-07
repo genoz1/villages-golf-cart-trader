@@ -87,3 +87,285 @@
 
         <div class="form-group">
           <label>Asking Price *</label>
+          <input class="field" id="fPrice" placeholder="$" type="number" min="0">
+        </div>
+
+        <div class="form-group">
+          <label>Power Type *</label>
+          <select class="field" id="fPower">
+            <option value="">Select</option>
+            <option>Electric</option>
+            <option>Lithium</option>
+            <option>Gas</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Number of Seats *</label>
+          <select class="field" id="fSeats">
+            <option value="">Select</option>
+            <option>2</option><option>4</option><option>6</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Street Legal?</label>
+          <select class="field" id="fStreetLegal">
+            <option value="">Select</option>
+            <option value="yes">Yes — street legal</option>
+            <option value="no">No — off-road / cart path only</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Location *</label>
+          <select class="field" id="fLocation">
+            <option value="">Select community</option>
+            <option>The Villages</option>
+            <option>Lady Lake</option>
+            <option>Wildwood</option>
+            <option>Oxford</option>
+            <option>Leesburg</option>
+            <option>Other nearby</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>Description *</label>
+          <textarea class="field" id="fDesc" rows="6" placeholder="Describe your cart — battery age, accessories, condition, any modifications, why you're selling, etc."></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label>Your Name *</label>
+          <input class="field" id="fName" placeholder="First and last name">
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input class="field" id="fEmail" placeholder="your@email.com" type="email">
+        </div>
+
+        <div class="form-group">
+          <label>Phone</label>
+          <input class="field" id="fPhone" placeholder="(352) 555-0000" type="tel">
+        </div>
+
+        <div class="form-group full">
+          <label>Photos (up to 20)</label>
+          <div class="upload-area" onclick="document.getElementById('photoUpload').click()">
+            <div style="font-size:32px;margin-bottom:8px">📷</div>
+            <strong>Click to upload photos</strong>
+            <p class="muted">JPEG or PNG, up to 20 photos. Include front, sides, rear, battery, interior.</p>
+            <input type="file" id="photoUpload" multiple accept="image/*" style="display:none" onchange="handlePhotos(this)">
+          </div>
+          <div id="photoPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+        </div>
+
+        <div class="full">
+          <button class="btn btn-gold btn-lg" style="width:100%" onclick="submitListing()">Continue to Payment →</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="panel">
+        <h3 style="margin-bottom:16px">How it works</h3>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">1</div>
+            <div><strong>Add cart details</strong><br><span class="muted" style="font-size:14px">Year, make, model, power type, seats, price, and location.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">2</div>
+            <div><strong>Upload photos</strong><br><span class="muted" style="font-size:14px">Clear front, side, rear, battery, interior, and accessory shots.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">3</div>
+            <div><strong>Pay and publish</strong><br><span class="muted" style="font-size:14px">Your listing goes live automatically after payment.</span></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">4</div>
+            <div><strong>Edit anytime</strong><br><span class="muted" style="font-size:14px">Change price, photos, description, or mark as sold.</span></div>
+          </div>
+        </div>
+
+        <div class="renewal-box">
+          <h3>📅 Renewal Reminders Included</h3>
+          <p style="margin-top:8px">Private seller listings run for <strong>30 days</strong> and do not auto-renew. You'll receive email reminders:</p>
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:var(--gold);font-size:16px">●</span> 7 days before expiration</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:orange;font-size:16px">●</span> 3 days before expiration</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:#d94040;font-size:16px">●</span> On the expiration day</div>
+          </div>
+          <p class="muted" style="font-size:13px;margin-top:12px">Expired listings are hidden from public search but saved in your account for easy renewal.</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px;background:linear-gradient(145deg,#052e23,var(--green2));color:white;border:none">
+        <h3 style="color:white;margin-bottom:8px">Private Seller Listing</h3>
+        <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:900;color:var(--gold2);margin-bottom:6px">$9.99</div>
+        <p style="color:#c8ecd6;font-size:14px;margin-bottom:16px">30-day listing · up to 20 photos · edit anytime · email reminders</p>
+        <a href="pricing.html" style="color:#8bd45f;font-size:13px;font-weight:700">See all pricing options →</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('payModal')">✕</button>
+    <h2>Review &amp; Pay</h2>
+    <p>Your listing is ready. Complete payment to publish it.</p>
+    <div style="background:#f4f8f6;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:20px" id="reviewSummary"></div>
+
+    <div style="margin-bottom:20px">
+      <label style="font-weight:700;font-size:14px;display:block;margin-bottom:10px">Choose listing type:</label>
+      <div style="display:flex;gap:10px">
+        <label style="flex:1;cursor:pointer" onclick="selectType('private')">
+          <div class="listing-type-card" id="cardPrivate" style="border:2px solid var(--green);border-radius:12px;padding:14px;text-align:center;background:#f4faf7;transition:.15s">
+            <div style="font-weight:800;font-size:18px;color:var(--green)">$9.99</div>
+            <div style="font-weight:700;font-size:13px;margin-top:2px">Standard</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">30 days</div>
+          </div>
+        </label>
+        <label style="flex:1;cursor:pointer" onclick="selectType('featured')">
+          <div class="listing-type-card" id="cardFeatured" style="border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;transition:.15s">
+            <div style="font-weight:800;font-size:18px;color:var(--gold2)">$19.99</div>
+            <div style="font-weight:700;font-size:13px;margin-top:2px">⭐ Featured</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Homepage placement</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-gold btn-lg" id="payBtn" onclick="confirmPayment()">Pay $9.99 and Publish</button>
+      <button class="btn btn-light" onclick="closeModal('payModal')">Back to Edit</button>
+    </div>
+    <p id="payError" style="color:#d94040;font-size:13px;margin-top:10px;display:none"></p>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('sell.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+if(new URLSearchParams(location.search).get('cancelled')) {
+  showToast('Payment cancelled — your listing details are still here.');
+}
+
+let selectedType = 'private';
+
+function selectType(type) {
+  selectedType = type;
+  const prices = { private: '$9.99', featured: '$19.99' };
+  document.getElementById('payBtn').textContent = `Pay ${prices[type]} and Publish`;
+  document.getElementById('cardPrivate').style.border = type === 'private' ? '2px solid var(--green)' : '2px solid var(--line)';
+  document.getElementById('cardPrivate').style.background = type === 'private' ? '#f4faf7' : '';
+  document.getElementById('cardFeatured').style.border = type === 'featured' ? '2px solid var(--gold)' : '2px solid var(--line)';
+  document.getElementById('cardFeatured').style.background = type === 'featured' ? '#fffbf0' : '';
+}
+
+function handlePhotos(input) {
+  const preview = document.getElementById('photoPreview');
+  preview.innerHTML = '';
+  const files = Array.from(input.files).slice(0, 20);
+  files.forEach(f => {
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.style.cssText = 'width:72px;height:72px;border-radius:10px;overflow:hidden;border:1.5px solid var(--line)';
+    div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+    preview.appendChild(div);
+  });
+}
+
+function submitListing() {
+  const required = {
+    fMake: 'Make', fModel: 'Model', fYear: 'Year',
+    fPrice: 'Price', fPower: 'Power type', fSeats: 'Seats',
+    fLocation: 'Location', fDesc: 'Description', fName: 'Your name', fEmail: 'Email',
+  };
+  for(const [id, label] of Object.entries(required)) {
+    if(!document.getElementById(id).value) {
+      showToast(`Please fill in: ${label}`);
+      document.getElementById(id).focus();
+      return;
+    }
+  }
+  const autoTitle = `${document.getElementById('fYear').value} ${document.getElementById('fMake').value} ${document.getElementById('fModel').value}`;
+  const summary = document.getElementById('reviewSummary');
+  summary.innerHTML = `
+    <div style="font-weight:700;font-size:16px;margin-bottom:8px">${autoTitle}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px">
+      <span class="muted">Price</span><span><strong>$${parseInt(document.getElementById('fPrice').value).toLocaleString()}</strong></span>
+      <span class="muted">Make / Model</span><span>${document.getElementById('fMake').value} ${document.getElementById('fModel').value}</span>
+      <span class="muted">Year / Power</span><span>${document.getElementById('fYear').value} · ${document.getElementById('fPower').value}</span>
+      <span class="muted">Location</span><span>${document.getElementById('fLocation').value}, FL</span>
+    </div>`;
+  selectType('private');
+  openModal('payModal');
+}
+
+async function confirmPayment() {
+  const btn = document.getElementById('payBtn');
+  const errEl = document.getElementById('payError');
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to Stripe…';
+  errEl.style.display = 'none';
+
+  let photoUrls = [];
+  const photoInput = document.getElementById('photoUpload');
+  if(photoInput.files.length > 0) {
+    try {
+      const formData = new FormData();
+      Array.from(photoInput.files).slice(0,20).forEach(f => formData.append('photos', f));
+      const upRes = await fetch('/api/upload-photos', { method: 'POST', body: formData });
+      const upData = await upRes.json();
+      if(upData.urls) photoUrls = upData.urls;
+    } catch(e) {}
+  }
+
+  const listing = {
+    title:    `${document.getElementById('fYear').value} ${document.getElementById('fMake').value} ${document.getElementById('fModel').value}`,
+    make:     document.getElementById('fMake').value,
+    model:    document.getElementById('fModel').value,
+    year:     document.getElementById('fYear').value,
+    price:    parseInt(document.getElementById('fPrice').value),
+    power:    document.getElementById('fPower').value,
+    seats:    document.getElementById('fSeats').value,
+    location: document.getElementById('fLocation').value,
+    desc:     document.getElementById('fDesc').value,
+    name:     document.getElementById('fName').value,
+    email:    document.getElementById('fEmail').value,
+    phone:    document.getElementById('fPhone').value,
+    streetLegal: document.getElementById('fStreetLegal').value === 'yes',
+  };
+
+  try {
+    const res  = await fetch('/api/create-checkout', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ listingType: selectedType, listing, photoUrls }),
+    });
+    const data = await res.json();
+    if(data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Could not create checkout session');
+    }
+  } catch(err) {
+    btn.disabled = false;
+    selectType(selectedType);
+    errEl.textContent = `Payment error: ${err.message}`;
+    errEl.style.display = 'block';
+  }
+}
+</script>
+</body>
