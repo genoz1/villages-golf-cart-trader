@@ -138,4 +138,22 @@ const steps = [
   { title:'Edit Anytime', desc:'Update price, description, photos, or mark the cart sold from your account dashboard at any time.' },
 ];
 document.getElementById('stepsGrid').innerHTML = steps.map(s =>
-  `<div class="step-card"><h3>${s.title}</h3>
+  `<div class="step-card"><h3>${s.title}</h3><p>${s.desc}</p></div>`
+).join('');
+
+// latest (non-featured, first 3)
+const latest = LISTINGS.filter(l => l.type !== 'Featured').slice(0, 3);
+document.getElementById('latestGrid').innerHTML = latest.map(l => makeCard(l, false)).join('');
+
+function heroSearch() {
+  const kw = document.getElementById('heroSearch').value;
+  const pw = document.getElementById('heroPower').value;
+  const params = new URLSearchParams();
+  if(kw) params.set('q', kw);
+  if(pw) params.set('power', pw);
+  window.location.href = 'listings.html' + (params.toString() ? '?' + params.toString() : '');
+}
+document.getElementById('heroSearch').addEventListener('keypress', e => { if(e.key==='Enter') heroSearch(); });
+</script>
+</body>
+</html>
