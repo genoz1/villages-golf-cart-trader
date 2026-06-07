@@ -96,13 +96,13 @@ function makeCard(l) {
     <div class="card-body">
       ${tagHtml}
       <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
-      <div class="price">${fmt(l.price)}</div>
-      <p class="muted" style="font-size:13px;margin-bottom:8px">📍 ${l.location}, FL</p>
+      <div class="price" style="display:inline-block">${fmt(l.price)}</div>
+      <p class="muted" style="font-size:13px;margin-bottom:8px;margin-top:4px">📍 ${l.location}, FL</p>
       <div class="specs">
         <span>${l.year}</span>
         <span>${l.power}</span>
         <span>${l.seats} Seats</span>
-        <span>Street Legal</span>
+        ${l.streetLegal ? '<span>Street Legal</span>' : ''}
       </div>
       <div style="margin-top:14px">
         <a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View Details</a>
@@ -152,7 +152,6 @@ function clearFilters() {
   applyFilters();
 }
 
-// Enter key search
 document.getElementById('fKeyword').addEventListener('keypress', e => { if(e.key==='Enter') applyFilters(); });
 
 applyFilters();
