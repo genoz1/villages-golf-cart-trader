@@ -78,7 +78,6 @@ document.getElementById('nav-root').innerHTML = renderNav('listings.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-// Pre-fill from URL params
 const params = new URLSearchParams(location.search);
 if(params.get('q')) document.getElementById('fKeyword').value = params.get('q');
 if(params.get('power')) document.getElementById('fPower').value = params.get('power');
@@ -94,6 +93,7 @@ function makeCard(l) {
   <article class="card">
     <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
     <div class="card-body">
+      ${l.isSample ? '<div class="sample-banner">Sample Listing</div>' : ''}
       ${tagHtml}
       <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
       <div class="price" style="display:inline-block">${fmt(l.price)}</div>
@@ -112,26 +112,26 @@ function makeCard(l) {
 }
 
 function applyFilters() {
-  const kw = document.getElementById('fKeyword').value.toLowerCase();
-  const make = document.getElementById('fMake').value;
+  const kw    = document.getElementById('fKeyword').value.toLowerCase();
+  const make  = document.getElementById('fMake').value;
   const power = document.getElementById('fPower').value;
   const seats = document.getElementById('fSeats').value;
-  const sort = document.getElementById('fSort').value;
+  const sort  = document.getElementById('fSort').value;
 
-  let results = LISTINGS.filter(l => l.status === 'Active');
+  let results = (ALL_LISTINGS.length ? ALL_LISTINGS : LISTINGS).filter(l => l.status === 'Active');
   if(kw) results = results.filter(l =>
     l.title.toLowerCase().includes(kw) || l.make.toLowerCase().includes(kw) || l.model.toLowerCase().includes(kw) || l.location.toLowerCase().includes(kw)
   );
-  if(make) results = results.filter(l => l.make === make);
+  if(make)  results = results.filter(l => l.make === make);
   if(power) results = results.filter(l => l.power === power);
   if(seats) results = results.filter(l => l.seats === parseInt(seats));
 
-  if(sort === 'price-asc') results.sort((a,b) => a.price - b.price);
+  if(sort === 'price-asc')  results.sort((a,b) => a.price - b.price);
   else if(sort === 'price-desc') results.sort((a,b) => b.price - a.price);
-  else if(sort === 'year-desc') results.sort((a,b) => b.year - a.year);
+  else if(sort === 'year-desc')  results.sort((a,b) => b.year - a.year);
   else results.sort((a,b) => (b.type==='Featured'?1:0) - (a.type==='Featured'?1:0));
 
-  const grid = document.getElementById('listingsGrid');
+  const grid  = document.getElementById('listingsGrid');
   const empty = document.getElementById('emptyState');
 
   if(results.length === 0) {
@@ -154,7 +154,42 @@ function clearFilters() {
 
 document.getElementById('fKeyword').addEventListener('keypress', e => { if(e.key==='Enter') applyFilters(); });
 
-applyFilters();
+function normalize(l) {
+  return {
+    id:          l.id,
+    title:       l.title,
+    price:       l.price,
+    make:        l.make,
+    model:       l.model,
+    year:        l.year,
+    power:       l.power,
+    seats:       l.seats,
+    streetLegal: l.street_legal,
+    location:    l.location,
+    type:        l.listing_type || 'Local',
+    photo:       (l.photo_urls && l.photo_urls[0]) || '',
+    isSample:    l.is_sample || false,
+    daysLeft:    l.days_left || 30,
+    status:      l.status,
+  };
+}
+
+let ALL_LISTINGS = [];
+
+async function init() {
+  try {
+    const res  = await fetch('/api/listings');
+    const data = await res.json();
+    ALL_LISTINGS = data.map(normalize);
+    applyFilters();
+  } catch(e) {
+    console.error('Failed to load listings:', e);
+    ALL_LISTINGS = LISTINGS;
+    applyFilters();
+  }
+}
+
+init();
 </script>
 </body>
 </html>
