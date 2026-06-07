@@ -306,7 +306,7 @@ a { text-decoration: none; color: inherit; }
   height: 100%;
   object-fit: cover;
 }
-.card-body { padding: 20px; }
+.card-body { padding: 20px; display: block; }
 .tag {
   display: inline-block;
   background: #edf8e9;
