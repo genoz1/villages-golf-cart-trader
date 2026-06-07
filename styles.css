@@ -320,12 +320,14 @@ a { text-decoration: none; color: inherit; }
 .tag-gold { background: #fef8e3; color: #8a5e00; }
 .tag-blue { background: #e8f0fe; color: #1a4fa0; }
 .tag-red { background: #fee8e8; color: #9b1f1f; }
+.tag-grey { background: #f0f0f0; color: #666; }
 .price {
   font-family: 'Syne', sans-serif;
   font-size: 24px;
   font-weight: 900;
   color: var(--green);
   margin: 8px 0;
+  display: inline-block;
 }
 .specs {
   display: flex;
@@ -457,6 +459,21 @@ a { text-decoration: none; color: inherit; }
 }
 .renewal-box h3 { font-size: 16px; margin-bottom: 10px; }
 .renewal-box p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ── SAMPLE BANNER ───────────────────────────── */
+.sample-banner {
+  background: #f0f0f0;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  display: inline-block;
+  margin-bottom: 6px;
+}
 
 /* ── FORM ─────────────────────────────────────── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
