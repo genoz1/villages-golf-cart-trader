@@ -135,39 +135,8 @@ const details = [
   ['Model', listing.model],
   ['Power', listing.power],
   ['Seats', listing.seats],
-  ['Street Legal', 'Yes'],
+  ['Street Legal', listing.streetLegal ? 'Yes' : 'No'],
   ['Location', listing.location + ', FL'],
   ['Seller Type', 'Private Seller'],
 ];
-document.getElementById('detailGrid').innerHTML = details.map(([k,v]) =>
-  `<div class="detail-item"><strong>${k}</strong><span>${v}</span></div>`
-).join('');
-
-// similar listings (same make or power, exclude current)
-const similar = LISTINGS.filter(l => l.id !== id && (l.make === listing.make || l.power === listing.power)).slice(0,3);
-document.getElementById('similarGrid').innerHTML = similar.map(l => `
-  <article class="card">
-    <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
-    <div class="card-body">
-      <span class="tag">${l.type==='Featured'?'⭐ Featured':'Local Listing'}</span>
-      <h3 style="font-size:15px;margin:6px 0">${l.title}</h3>
-      <div class="price">${fmt(l.price)}</div>
-      <p class="muted" style="font-size:13px">📍 ${l.location}, FL</p>
-      <div style="margin-top:12px"><a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View</a></div>
-    </div>
-  </article>`).join('');
-
-function sendContact() {
-  const name = document.getElementById('cName').value;
-  const email = document.getElementById('cEmail').value;
-  if(!name || !email) { showToast('Please fill in your name and email.'); return; }
-  closeModal('contactModal');
-  showToast(`✅ Message sent! The seller will reply to ${email}.`);
-}
-
-function copyShare() {
-  navigator.clipboard.writeText(location.href).then(()=> showToast('✅ Link copied!'));
-}
-</script>
-</body>
-</html>
+document.getElementById('de
