@@ -110,6 +110,7 @@ function makeCard(l, showFeatured) {
   <article class="card fade-up">
     <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
     <div class="card-body">
+      ${l.isSample ? '<div class="sample-banner">Sample Listing</div>' : ''}
       ${showFeatured && l.type==='Featured' ? '<span class="tag tag-gold">⭐ Featured</span>' : '<span class="tag">Local Listing</span>'}
       <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
       <div class="price" style="display:inline-block">${fmt(l.price)}</div>
@@ -127,10 +128,6 @@ function makeCard(l, showFeatured) {
   </article>`;
 }
 
-// featured
-const featured = LISTINGS.filter(l => l.type === 'Featured');
-document.getElementById('featuredGrid').innerHTML = featured.map(l => makeCard(l, true)).join('');
-
 // steps
 const steps = [
   { title:'Post Your Cart', desc:'Upload photos, enter details, pay the listing fee, and publish automatically. Takes about 5 minutes.' },
@@ -141,9 +138,48 @@ document.getElementById('stepsGrid').innerHTML = steps.map(s =>
   `<div class="step-card"><h3>${s.title}</h3><p>${s.desc}</p></div>`
 ).join('');
 
-// latest (non-featured, first 3)
-const latest = LISTINGS.filter(l => l.type !== 'Featured').slice(0, 3);
-document.getElementById('latestGrid').innerHTML = latest.map(l => makeCard(l, false)).join('');
+// Load listings from database
+async function loadListings() {
+  try {
+    const res  = await fetch('/api/listings');
+    const data = await res.json();
+    const listings = data.map(normalize);
+    const featured = listings.filter(l => l.type === 'Featured');
+    const latest   = listings.filter(l => l.type !== 'Featured').slice(0, 3);
+
+    document.getElementById('featuredGrid').innerHTML = featured.length
+      ? featured.map(l => makeCard(l, true)).join('')
+      : '<p class="muted" style="padding:20px">No featured listings yet.</p>';
+
+    document.getElementById('latestGrid').innerHTML = latest.length
+      ? latest.map(l => makeCard(l, false)).join('')
+      : '<p class="muted" style="padding:20px">No listings yet — be the first to post!</p>';
+
+  } catch(e) {
+    console.error('Failed to load listings:', e);
+  }
+}
+
+function normalize(l) {
+  return {
+    id:          l.id,
+    title:       l.title,
+    price:       l.price,
+    make:        l.make,
+    model:       l.model,
+    year:        l.year,
+    power:       l.power,
+    seats:       l.seats,
+    streetLegal: l.street_legal,
+    location:    l.location,
+    type:        l.listing_type || 'Local',
+    photo:       (l.photo_urls && l.photo_urls[0]) || '',
+    isSample:    l.is_sample || false,
+    daysLeft:    l.days_left || 30,
+  };
+}
+
+loadListings();
 
 function heroSearch() {
   const kw = document.getElementById('heroSearch').value;
