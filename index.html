@@ -112,13 +112,13 @@ function makeCard(l, showFeatured) {
     <div class="card-body">
       ${showFeatured && l.type==='Featured' ? '<span class="tag tag-gold">⭐ Featured</span>' : '<span class="tag">Local Listing</span>'}
       <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
-      <div class="price">${fmt(l.price)}</div>
-      <p class="muted" style="font-size:13px;margin-bottom:8px">📍 ${l.location}, FL</p>
+      <div class="price" style="display:inline-block">${fmt(l.price)}</div>
+      <p class="muted" style="font-size:13px;margin-bottom:8px;margin-top:4px">📍 ${l.location}, FL</p>
       <div class="specs">
         <span>${l.year}</span>
         <span>${l.power}</span>
         <span>${l.seats} Seats</span>
-        <span>Street Legal</span>
+        ${l.streetLegal ? '<span>Street Legal</span>' : ''}
       </div>
       <div style="margin-top:14px">
         <a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View Listing</a>
@@ -138,22 +138,4 @@ const steps = [
   { title:'Edit Anytime', desc:'Update price, description, photos, or mark the cart sold from your account dashboard at any time.' },
 ];
 document.getElementById('stepsGrid').innerHTML = steps.map(s =>
-  `<div class="step-card"><h3>${s.title}</h3><p>${s.desc}</p></div>`
-).join('');
-
-// latest (non-featured, first 3)
-const latest = LISTINGS.filter(l => l.type !== 'Featured').slice(0, 3);
-document.getElementById('latestGrid').innerHTML = latest.map(l => makeCard(l, false)).join('');
-
-function heroSearch() {
-  const kw = document.getElementById('heroSearch').value;
-  const pw = document.getElementById('heroPower').value;
-  const params = new URLSearchParams();
-  if(kw) params.set('q', kw);
-  if(pw) params.set('power', pw);
-  window.location.href = 'listings.html' + (params.toString() ? '?' + params.toString() : '');
-}
-document.getElementById('heroSearch').addEventListener('keypress', e => { if(e.key==='Enter') heroSearch(); });
-</script>
-</body>
-</html>
+  `<div class="step-card"><h3>${s.title}</h3>
