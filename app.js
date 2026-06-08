@@ -48,6 +48,7 @@ function renderNav(activePage) {
     ['dealers.html','Dealers'],
     ['pricing.html','Pricing'],
     ['contact.html','Contact'],
+    ['account.html','My Account'],
   ];
   const links = pages.map(([href,label]) =>
     `<a href="${href}" class="${activePage===href?'active':''}">${label}</a>`
