@@ -10,33 +10,40 @@
 
 <div id="nav-root"></div>
 
-<section class="page-hero">
+<section class="page-hero" style="background:linear-gradient(135deg,#0a1f5c,#1a4fa0)">
   <div class="inner">
     <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Dealers</div>
-    <h1>Local Dealer Inventory</h1>
-    <p>Golf cart dealers serving The Villages, Wildwood, Lady Lake, Oxford, and Leesburg.</p>
+    <h1>Golf Cart Dealers</h1>
+    <p>Local dealerships serving The Villages, Wildwood, Lady Lake, Oxford, and Leesburg.</p>
   </div>
 </section>
 
 <main class="container">
 
-  <div class="grid grid-3" id="dealerGrid"></div>
-
-  <!-- BECOME A DEALER -->
-  <div style="margin-top:52px;background:linear-gradient(145deg,#052e23,var(--green2));border-radius:28px;padding:44px 40px;color:white;display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center">
+  <!-- BECOME A DEALER CTA -->
+  <div style="background:linear-gradient(145deg,#052e23,var(--green2));border-radius:28px;padding:44px 40px;color:white;display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center;margin-bottom:52px">
     <div>
-      <h2 style="font-size:34px;letter-spacing:-.04em;margin-bottom:10px">Become a Founding Dealer</h2>
-      <p style="color:#c8ecd6;font-size:16px;line-height:1.6;max-width:500px">Introductory dealer packages are available for early local partners. Get your inventory in front of the most active golf cart buyers in Central Florida.</p>
+      <p style="font-size:13px;font-weight:700;color:#8bd45f;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">For Dealerships</p>
+      <h2 style="font-size:34px;letter-spacing:-.04em;margin-bottom:10px">Become a Dealer — $49/mo</h2>
+      <p style="color:#c8ecd6;font-size:16px;line-height:1.6;max-width:500px">Post unlimited inventory, get the 🏢 Dealer badge on all listings, and reach the most active golf cart buyers in Central Florida. Cancel anytime.</p>
       <div class="specs" style="margin-top:16px">
         <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">Unlimited listings</span>
-        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">Dealer profile page</span>
-        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">$49/month</span>
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">🏢 Dealer badge</span>
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">No setup fees</span>
+        <span style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:white">Cancel anytime</span>
       </div>
     </div>
-    <div>
-      <a href="contact.html" class="btn btn-gold btn-lg">Request Info</a>
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+      <a href="dealer-signup.html" class="btn btn-gold btn-lg">Sign Up as a Dealer</a>
+      <a href="login.html" style="color:#8bd45f;font-size:13px;font-weight:700">Already a dealer? Sign in →</a>
     </div>
   </div>
+
+  <!-- DEALER GRID -->
+  <div class="section-head" style="margin-bottom:24px">
+    <h2>Current Dealers</h2>
+  </div>
+  <div class="grid grid-3" id="dealerGrid"></div>
 
 </main>
 
@@ -52,6 +59,7 @@ document.getElementById('dealerGrid').innerHTML = DEALERS.map(d => `
   <div class="card">
     <div class="card-body">
       <div class="dealer-logo">${d.initials}</div>
+      <span class="tag tag-blue" style="margin-bottom:10px">🏢 Dealer</span>
       <h3 style="font-size:18px;margin-bottom:4px">${d.name}</h3>
       <p class="muted" style="font-size:14px;margin-bottom:4px">📍 ${d.location}</p>
       <p class="muted" style="font-size:14px;margin-bottom:12px">📞 ${d.phone}</p>
@@ -61,15 +69,7 @@ document.getElementById('dealerGrid').innerHTML = DEALERS.map(d => `
       </div>
       <a class="btn btn-green btn-sm" href="listings.html">View Inventory</a>
     </div>
-  </div>`).join('') + `
-  <div class="card" style="border:2px dashed var(--line);background:#fafcfb">
-    <div class="card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:240px">
-      <div style="font-size:40px;margin-bottom:12px">🏪</div>
-      <h3 style="font-size:17px;margin-bottom:8px">Become a Dealer</h3>
-      <p class="muted" style="font-size:14px;line-height:1.5;margin-bottom:18px">Join local dealers reaching the most active golf cart buyers in The Villages.</p>
-      <a href="contact.html" class="btn btn-gold btn-sm">Request Info</a>
-    </div>
-  </div>`;
+  </div>`).join('');
 </script>
 </body>
 </html>
