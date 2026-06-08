@@ -239,4 +239,215 @@ async function init() {
       ? '✅ Active subscription — unlimited listings'
       : '⚠️ Subscription inactive — listings hidden';
     loadDealerListings();
-  } else
+  } else {
+    document.getElementById('sellerView').style.display = 'block';
+    loadSellerListings();
+  }
+}
+
+async function loadSellerListings() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('seller_email', currentUser.email)
+    .order('created_at', { ascending: false });
+
+  const container = document.getElementById('sellerListings');
+
+  if(error || !data || data.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🛺</div>
+        <h3>No listings yet</h3>
+        <p>Post your first cart and it will appear here.</p>
+        <a href="sell.html" class="btn btn-gold">Post Your Cart</a>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(l => {
+    const photo = l.photo_urls && l.photo_urls[0] ? l.photo_urls[0] : '';
+    const daysLeft = l.days_left || 0;
+    const pct = Math.max(0, Math.min(100, (daysLeft / 30) * 100));
+    const fillClass = daysLeft <= 3 ? 'expired' : daysLeft <= 7 ? 'warn' : '';
+    return `
+    <div class="listing-row">
+      <div class="listing-row-thumb" style="overflow:hidden;border-radius:10px">
+        ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : '🛺'}
+      </div>
+      <div class="listing-row-body" style="flex:1">
+        <h3>${l.title}</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span class="tag ${l.status === 'Active' ? '' : l.status === 'Sold' ? 'tag-grey' : 'tag-red'}">${l.status}</span>
+          <span class="tag tag-gold">$${Number(l.price).toLocaleString()}</span>
+        </div>
+        <div class="days-bar" style="margin-top:8px">
+          <div class="days-track"><div class="days-fill ${fillClass}" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap">${daysLeft} days left</span>
+        </div>
+        <div class="listing-row-actions">
+          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${l.description?.replace(/`/g,"'")}\`)">✏️ Edit</button>
+          <button class="btn btn-light btn-sm" onclick="deleteListing('${l.id}')">🗑️ Remove</button>
+          ${l.status === 'Active' ? `<a href="listing-detail.html?id=${l.id}" class="btn btn-green btn-sm" target="_blank">👁 View</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadDealerListings() {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  const container = document.getElementById('dealerListings');
+
+  if(error || !data || data.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🏢</div>
+        <h3>No inventory yet</h3>
+        <p>Add your first cart using the button above.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = data.map(l => {
+    const photo = l.photo_urls && l.photo_urls[0] ? l.photo_urls[0] : '';
+    return `
+    <div class="listing-row">
+      <div class="listing-row-thumb" style="overflow:hidden;border-radius:10px">
+        ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : '🛺'}
+      </div>
+      <div class="listing-row-body" style="flex:1">
+        <h3>${l.title}</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span class="tag tag-blue">🏢 Dealer</span>
+          <span class="tag ${l.status === 'Active' ? '' : 'tag-grey'}">${l.status}</span>
+          <span class="tag tag-gold">$${Number(l.price).toLocaleString()}</span>
+        </div>
+        <div class="listing-row-actions">
+          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${l.description?.replace(/`/g,"'")}\`)">✏️ Edit</button>
+          <button class="btn btn-light btn-sm" onclick="deleteListing('${l.id}')">🗑️ Remove</button>
+          ${l.status === 'Active' ? `<a href="listing-detail.html?id=${l.id}" class="btn btn-green btn-sm" target="_blank">👁 View</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEdit(id, price, status, desc) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editPrice').value = price;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editDesc').value = desc;
+  openModal('editModal');
+}
+
+async function saveEdit() {
+  const id     = document.getElementById('editId').value;
+  const price  = parseInt(document.getElementById('editPrice').value);
+  const status = document.getElementById('editStatus').value;
+  const desc   = document.getElementById('editDesc').value;
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ price, status, description: desc })
+    .eq('id', id);
+
+  if(error) { showToast('Error saving changes.'); return; }
+  closeModal('editModal');
+  showToast('✅ Listing updated!');
+  currentProfile.role === 'dealer' ? loadDealerListings() : loadSellerListings();
+}
+
+async function deleteListing(id) {
+  if(!confirm('Remove this listing? This cannot be undone.')) return;
+  const { error } = await supabase.from('listings').delete().eq('id', id);
+  if(error) { showToast('Error removing listing.'); return; }
+  showToast('Listing removed.');
+  currentProfile.role === 'dealer' ? loadDealerListings() : loadSellerListings();
+}
+
+function previewDealerPhotos(input) {
+  const preview = document.getElementById('acPhotoPreview');
+  preview.innerHTML = '';
+  Array.from(input.files).slice(0,20).forEach(f => {
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.style.cssText = 'width:64px;height:64px;border-radius:10px;overflow:hidden;border:1.5px solid var(--line)';
+    div.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+    preview.appendChild(div);
+  });
+}
+
+async function addDealerCart() {
+  const errEl = document.getElementById('addCartError');
+  errEl.style.display = 'none';
+
+  const required = { acMake:'Make', acModel:'Model', acYear:'Year', acPrice:'Price', acPower:'Power', acSeats:'Seats', acLocation:'Location', acDesc:'Description' };
+  for(const [id, label] of Object.entries(required)) {
+    if(!document.getElementById(id).value) {
+      errEl.textContent = `Please fill in: ${label}`;
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  let photoUrls = [];
+  const photoInput = document.getElementById('acPhotos');
+  if(photoInput.files.length > 0) {
+    try {
+      const formData = new FormData();
+      Array.from(photoInput.files).slice(0,20).forEach(f => formData.append('photos', f));
+      const upRes  = await fetch('/api/upload-photos', { method:'POST', body: formData });
+      const upData = await upRes.json();
+      if(upData.urls) photoUrls = upData.urls;
+    } catch(e) {}
+  }
+
+  const make  = document.getElementById('acMake').value;
+  const model = document.getElementById('acModel').value;
+  const year  = document.getElementById('acYear').value;
+
+  const { error } = await supabase.from('listings').insert([{
+    title:        `${year} ${make} ${model}`,
+    make, model, year,
+    price:        parseInt(document.getElementById('acPrice').value),
+    power:        document.getElementById('acPower').value,
+    seats:        document.getElementById('acSeats').value,
+    street_legal: document.getElementById('acStreetLegal').value === 'yes',
+    location:     document.getElementById('acLocation').value,
+    description:  document.getElementById('acDesc').value,
+    seller_name:  currentProfile.full_name || '',
+    seller_email: currentUser.email,
+    photo_urls:   photoUrls,
+    listing_type: 'Dealer',
+    status:       currentProfile.dealer_active ? 'Active' : 'Hidden',
+    user_id:      currentUser.id,
+    is_sample:    false,
+    days_left:    365,
+  }]);
+
+  if(error) {
+    errEl.textContent = `Error: ${error.message}`;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  closeModal('addCartModal');
+  showToast('✅ Cart added to your inventory!');
+  loadDealerListings();
+}
+
+async function signOut() {
+  await supabase.auth.signOut();
+  window.location.href = 'index.html';
+}
+
+init();
+</script>
+</body>
+</html>
