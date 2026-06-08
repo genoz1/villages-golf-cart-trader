@@ -9,7 +9,6 @@ const cors     = require('cors');
 const Stripe   = require('stripe');
 const multer   = require('multer');
 const path     = require('path');
-const fs       = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app    = express();
@@ -26,21 +25,9 @@ app.use(cors({ origin: process.env.SITE_URL || 'http://localhost:3000' }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Photo uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = path.join(__dirname, 'uploads');
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname);
-    const name = Date.now() + '-' + Math.random().toString(36).slice(2) + ext;
-    cb(null, name);
-  }
-});
+// Photo uploads — use memory storage then upload to Supabase Storage
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024, files: 20 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
@@ -56,9 +43,33 @@ const PRICES = {
 };
 
 // ── POST /api/upload-photos ─────────────────────────────────────────────────
-app.post('/api/upload-photos', upload.array('photos', 20), (req, res) => {
-  const urls = req.files.map(f => `/uploads/${f.filename}`);
-  res.json({ urls });
+app.post('/api/upload-photos', upload.array('photos', 20), async (req, res) => {
+  try {
+    const urls = await Promise.all(req.files.map(async (file) => {
+      const ext      = file.originalname.split('.').pop();
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('listing-photos')
+        .upload(filename, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (error) throw new Error(error.message);
+
+      const { data } = supabase.storage
+        .from('listing-photos')
+        .getPublicUrl(filename);
+
+      return data.publicUrl;
+    }));
+
+    res.json({ urls });
+  } catch (err) {
+    console.error('Upload error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── POST /api/create-checkout ───────────────────────────────────────────────
@@ -246,29 +257,6 @@ app.get('/api/listing/:id', async (req, res) => {
   res.json(safe);
 });
 
-// ── GET /api/dealers ────────────────────────────────────────────────────────
-app.get('/api/dealers', async (req, res) => {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, dealer_active, created_at')
-    .eq('role', 'dealer')
-    .eq('dealer_active', true)
-    .order('created_at', { ascending: true });
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  const dealersWithCount = await Promise.all(data.map(async (dealer) => {
-    const { count } = await supabase
-      .from('listings')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', dealer.id)
-      .eq('status', 'Active');
-    return { ...dealer, listing_count: count || 0 };
-  }));
-
-  res.json(dealersWithCount);
-});
-
 // ── POST /api/dealer-checkout ───────────────────────────────────────────────
 app.post('/api/dealer-checkout', async (req, res) => {
   try {
@@ -323,6 +311,29 @@ app.post('/api/seed-samples', async (req, res) => {
   const { error } = await supabase.from('listings').insert(samples);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true, count: samples.length });
+});
+
+// ── GET /api/dealers ────────────────────────────────────────────────────────
+app.get('/api/dealers', async (req, res) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, dealer_active, created_at')
+    .eq('role', 'dealer')
+    .eq('dealer_active', true)
+    .order('created_at', { ascending: true });
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const dealersWithCount = await Promise.all(data.map(async (dealer) => {
+    const { count } = await supabase
+      .from('listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', dealer.id)
+      .eq('status', 'Active');
+    return { ...dealer, listing_count: count || 0 };
+  }));
+
+  res.json(dealersWithCount);
 });
 
 // ── Start ───────────────────────────────────────────────────────────────────
