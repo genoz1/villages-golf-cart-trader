@@ -20,7 +20,6 @@
 <main class="container">
   <div class="split" id="mainContent" style="display:none">
 
-    <!-- LEFT: Photos -->
     <div>
       <div class="photo-main" id="photoMain" style="overflow:hidden"></div>
       <div class="thumbs">
@@ -35,20 +34,16 @@
       </div>
     </div>
 
-    <!-- RIGHT: Details -->
     <div>
       <div class="panel" style="position:sticky;top:80px">
         <span class="tag" id="listingTag">Local Listing</span>
         <div class="price" id="listingPrice"></div>
         <p id="listingLocation" class="muted" style="font-size:14px;margin-bottom:16px"></p>
-
         <div class="detail-grid" id="detailGrid"></div>
-
         <div style="margin-top:22px;display:flex;flex-direction:column;gap:10px">
           <button class="btn btn-gold btn-lg" onclick="openModal('contactModal')">📞 Contact Seller</button>
           <button class="btn btn-light" onclick="openModal('shareModal')">🔗 Share Listing</button>
         </div>
-
         <div class="renewal-box" style="margin-top:20px">
           <p style="font-size:13px;color:var(--muted)">🔒 Never share personal info before meeting in a safe, public location.</p>
         </div>
@@ -56,7 +51,6 @@
     </div>
   </div>
 
-  <!-- SIMILAR LISTINGS -->
   <div style="margin-top:52px">
     <div class="section-head">
       <h2>Similar Listings</h2>
@@ -66,7 +60,6 @@
   </div>
 </main>
 
-<!-- CONTACT MODAL -->
 <div class="modal-overlay" id="contactModal">
   <div class="modal" style="position:relative">
     <button class="modal-close" onclick="closeModal('contactModal')">✕</button>
@@ -82,7 +75,6 @@
   </div>
 </div>
 
-<!-- SHARE MODAL -->
 <div class="modal-overlay" id="shareModal">
   <div class="modal" style="position:relative">
     <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
@@ -103,59 +95,97 @@ document.getElementById('nav-root').innerHTML = renderNav('listings.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-const id = getListingId();
-const listing = LISTINGS.find(l => l.id === id) || LISTINGS[0];
+const urlId = new URLSearchParams(location.search).get('id');
 
-// populate main photo
-const photoMain = document.getElementById('photoMain');
-if(listing.photo) {
-  photoMain.innerHTML = `<img src="${listing.photo}" alt="${listing.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
-} else {
-  photoMain.textContent = '🛺';
+function populateListing(l) {
+  const photo = (l.photo_urls && l.photo_urls[0]) || l.photo || '';
+  const type  = l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local';
+
+  const photoMain = document.getElementById('photoMain');
+  if(photo) {
+    photoMain.innerHTML = `<img src="${photo}" alt="${l.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
+  } else {
+    photoMain.textContent = '🛺';
+  }
+
+  document.title = `${l.title} | Villages Golf Cart Trader`;
+  document.getElementById('heroTitle').textContent = l.title;
+  document.getElementById('heroH1').textContent = l.title;
+  document.getElementById('heroSub').textContent = `📍 ${l.location}, FL · ${type === 'Featured' ? '⭐ Featured Listing' : type === 'Dealer' ? '🏢 Dealer' : 'Private Seller'}`;
+
+  document.getElementById('mainContent').style.display = '';
+  document.getElementById('listingTag').textContent = type === 'Featured' ? '⭐ Featured' : type === 'Dealer' ? '🏢 Dealer' : 'Local Listing';
+  if(type === 'Featured') document.getElementById('listingTag').className = 'tag tag-gold';
+  else if(type === 'Dealer') document.getElementById('listingTag').className = 'tag tag-blue';
+
+  document.getElementById('listingPrice').textContent = fmt(l.price);
+  document.getElementById('listingLocation').textContent = `📍 ${l.location}, FL`;
+  document.getElementById('listingDesc').textContent = l.description || l.desc || '';
+  document.getElementById('shareUrl').value = location.href;
+
+  const streetLegal = l.street_legal !== undefined ? l.street_legal : l.streetLegal;
+  const details = [
+    ['Year', l.year],
+    ['Make', l.make],
+    ['Model', l.model],
+    ['Power', l.power],
+    ['Seats', l.seats],
+    ['Street Legal', streetLegal ? 'Yes' : 'No'],
+    ['Location', l.location + ', FL'],
+    ['Seller Type', type === 'Dealer' ? 'Dealer' : 'Private Seller'],
+  ];
+  document.getElementById('detailGrid').innerHTML = details.map(([k,v]) =>
+    `<div class="detail-item"><strong>${k}</strong><span>${v}</span></div>`
+  ).join('');
 }
 
-// populate page hero
-document.title = `${listing.title} | Villages Golf Cart Trader`;
-document.getElementById('heroTitle').textContent = listing.title;
-document.getElementById('heroH1').textContent = listing.title;
-document.getElementById('heroSub').textContent = `📍 ${listing.location}, FL · ${listing.type === 'Featured' ? '⭐ Featured Listing' : 'Private Seller'}`;
+async function loadListing() {
+  try {
+    const res = await fetch(`/api/listing/${urlId}`);
+    if(res.ok) {
+      const l = await res.json();
+      populateListing(l);
+      const allRes  = await fetch('/api/listings');
+      const allData = await allRes.json();
+      const similar = allData.filter(x => x.id !== l.id && (x.make === l.make || x.power === l.power)).slice(0, 3);
+      renderSimilar(similar, true);
+      return;
+    }
+  } catch(e) {}
 
-// populate main content
-document.getElementById('mainContent').style.display = '';
-document.getElementById('listingTag').textContent = listing.type === 'Featured' ? '⭐ Featured' : 'Local Listing';
-if(listing.type === 'Featured') document.getElementById('listingTag').className = 'tag tag-gold';
-document.getElementById('listingPrice').textContent = fmt(listing.price);
-document.getElementById('listingLocation').textContent = `📍 ${listing.location}, FL`;
-document.getElementById('listingDesc').textContent = listing.desc;
-document.getElementById('shareUrl').value = location.href;
+  // Fallback to hardcoded LISTINGS array
+  const numId   = parseInt(urlId) || 1;
+  const listing = LISTINGS.find(x => x.id === numId) || LISTINGS[0];
+  populateListing({
+    ...listing,
+    photo_urls:   [listing.photo],
+    description:  listing.desc,
+    listing_type: listing.type,
+    street_legal: listing.streetLegal,
+  });
+  const similar = LISTINGS.filter(x => x.id !== numId && (x.make === listing.make || x.power === listing.power)).slice(0,3);
+  renderSimilar(similar, false);
+}
 
-const details = [
-  ['Year', listing.year],
-  ['Make', listing.make],
-  ['Model', listing.model],
-  ['Power', listing.power],
-  ['Seats', listing.seats],
-  ['Street Legal', listing.streetLegal ? 'Yes' : 'No'],
-  ['Location', listing.location + ', FL'],
-  ['Seller Type', 'Private Seller'],
-];
-document.getElementById('detailGrid').innerHTML = details.map(([k,v]) =>
-  `<div class="detail-item"><strong>${k}</strong><span>${v}</span></div>`
-).join('');
+function renderSimilar(items, fromDb) {
+  document.getElementById('similarGrid').innerHTML = items.map(l => {
+    const photo = fromDb ? ((l.photo_urls && l.photo_urls[0]) || '') : (l.photo || '');
+    const type  = fromDb ? (l.listing_type || 'Local') : (l.type || 'Local');
+    return `
+    <article class="card">
+      <div class="listing-img"><img src="${photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
+      <div class="card-body">
+        <span class="tag">${type==='Featured'?'⭐ Featured':type==='Dealer'?'🏢 Dealer':'Local Listing'}</span>
+        <h3 style="font-size:15px;margin:6px 0">${l.title}</h3>
+        <div class="price" style="display:inline-block">${fmt(l.price)}</div>
+        <p class="muted" style="font-size:13px">📍 ${l.location}, FL</p>
+        <div style="margin-top:12px"><a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View</a></div>
+      </div>
+    </article>`;
+  }).join('');
+}
 
-// similar listings (same make or power, exclude current)
-const similar = LISTINGS.filter(l => l.id !== id && (l.make === listing.make || l.power === listing.power)).slice(0,3);
-document.getElementById('similarGrid').innerHTML = similar.map(l => `
-  <article class="card">
-    <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
-    <div class="card-body">
-      <span class="tag">${l.type==='Featured'?'⭐ Featured':'Local Listing'}</span>
-      <h3 style="font-size:15px;margin:6px 0">${l.title}</h3>
-      <div class="price" style="display:inline-block">${fmt(l.price)}</div>
-      <p class="muted" style="font-size:13px">📍 ${l.location}, FL</p>
-      <div style="margin-top:12px"><a class="btn btn-green btn-sm" href="listing-detail.html?id=${l.id}">View</a></div>
-    </div>
-  </article>`).join('');
+loadListing();
 
 function sendContact() {
   const name = document.getElementById('cName').value;
