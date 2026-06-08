@@ -43,7 +43,9 @@
   <div class="section-head" style="margin-bottom:24px">
     <h2>Current Dealers</h2>
   </div>
-  <div class="grid grid-3" id="dealerGrid"></div>
+  <div class="grid grid-3" id="dealerGrid">
+    <p class="muted" style="padding:20px">Loading dealers…</p>
+  </div>
 
 </main>
 
@@ -55,21 +57,45 @@ document.getElementById('nav-root').innerHTML = renderNav('dealers.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-document.getElementById('dealerGrid').innerHTML = DEALERS.map(d => `
-  <div class="card">
-    <div class="card-body">
-      <div class="dealer-logo">${d.initials}</div>
-      <span class="tag tag-blue" style="margin-bottom:10px">🏢 Dealer</span>
-      <h3 style="font-size:18px;margin-bottom:4px">${d.name}</h3>
-      <p class="muted" style="font-size:14px;margin-bottom:4px">📍 ${d.location}</p>
-      <p class="muted" style="font-size:14px;margin-bottom:12px">📞 ${d.phone}</p>
-      <p style="font-size:14px;margin-bottom:16px">${d.tagline}</p>
-      <div class="specs" style="margin-bottom:16px">
-        <span>${d.inventory} active listings</span>
-      </div>
-      <a class="btn btn-green btn-sm" href="listings.html">View Inventory</a>
-    </div>
-  </div>`).join('');
+async function loadDealers() {
+  const grid = document.getElementById('dealerGrid');
+  try {
+    const res  = await fetch('/api/dealers');
+    const data = await res.json();
+
+    if(!data || data.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="icon">🏢</div>
+          <h3>No dealers yet</h3>
+          <p>Be the first dealership to list on Villages Golf Cart Trader.</p>
+          <a href="dealer-signup.html" class="btn btn-gold">Sign Up as a Dealer</a>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = data.map(d => {
+      const initials = (d.full_name || 'D').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+      return `
+      <div class="card">
+        <div class="card-body">
+          <div class="dealer-logo">${initials}</div>
+          <span class="tag tag-blue" style="margin-bottom:10px">🏢 Dealer</span>
+          <h3 style="font-size:18px;margin-bottom:12px">${d.full_name || 'Dealer'}</h3>
+          <div class="specs" style="margin-bottom:16px">
+            <span>${d.listing_count} active listing${d.listing_count !== 1 ? 's' : ''}</span>
+          </div>
+          <a class="btn btn-green btn-sm" href="listings.html?dealer_id=${d.id}">View Inventory</a>
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    grid.innerHTML = '<p class="muted" style="padding:20px">Could not load dealers.</p>';
+  }
+}
+
+loadDealers();
 </script>
 </body>
 </html>
