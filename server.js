@@ -75,7 +75,6 @@ app.post('/api/create-checkout', async (req, res) => {
       return res.status(400).json({ error: `Unknown listing type: ${listingType}` });
     }
 
-    // Save listing to Supabase as Pending
     const { data, error } = await supabase
       .from('listings')
       .insert([{
@@ -139,11 +138,10 @@ app.post('/api/stripe-webhook',
     }
 
     if (event.type === 'checkout.session.completed') {
-      const session   = event.data.object;
-      const { listingId, dealerEmail, dealerName, businessName, dealerPhone, dealerLocation, dealerDesc } = session.metadata || {};
+      const session = event.data.object;
+      const { listingId, dealerEmail, dealerName, businessName } = session.metadata || {};
 
       if (listingId) {
-        // Private seller listing activated
         const { error } = await supabase
           .from('listings')
           .update({
@@ -157,11 +155,9 @@ app.post('/api/stripe-webhook',
         else console.log(`✅ Listing ${listingId} activated`);
 
       } else if (dealerEmail) {
-        // New dealer subscription — create profile
-        const customerId = session.customer;
+        const customerId     = session.customer;
         const subscriptionId = session.subscription;
 
-        // Create Supabase auth user via admin API
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
           email: dealerEmail,
           email_confirm: true,
@@ -174,22 +170,20 @@ app.post('/api/stripe-webhook',
 
         const userId = authUser?.user?.id;
 
-        // Upsert profile
         if (userId) {
           await supabase.from('profiles').upsert([{
-            id:                    userId,
-            email:                 dealerEmail,
-            full_name:             dealerName,
-            role:                  'dealer',
-            dealer_active:         true,
-            stripe_customer_id:    customerId,
+            id:                     userId,
+            email:                  dealerEmail,
+            full_name:              dealerName,
+            role:                   'dealer',
+            dealer_active:          true,
+            stripe_customer_id:     customerId,
             dealer_subscription_id: subscriptionId,
           }]);
         }
 
         console.log(`✅ Dealer account created: ${dealerEmail}`);
 
-        // Send magic link so dealer can log in
         await supabase.auth.admin.generateLink({
           type: 'magiclink',
           email: dealerEmail,
@@ -197,36 +191,23 @@ app.post('/api/stripe-webhook',
       }
     }
 
-    // Dealer subscription cancelled/unpaid — hide all their listings
     if (event.type === 'customer.subscription.deleted' || event.type === 'invoice.payment_failed') {
       const customerId = event.data.object.customer;
-
-      // Find profile by stripe customer id
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('stripe_customer_id', customerId);
+        .from('profiles').select('id').eq('stripe_customer_id', customerId);
 
       if (profiles && profiles.length > 0) {
         const userId = profiles[0].id;
-
-        // Deactivate dealer
         await supabase.from('profiles').update({ dealer_active: false }).eq('id', userId);
-
-        // Hide all their listings
         await supabase.from('listings').update({ status: 'Hidden' }).eq('user_id', userId);
-
         console.log(`⚠️ Dealer subscription cancelled: ${customerId}`);
       }
     }
 
-    // Dealer subscription renewed
     if (event.type === 'invoice.payment_succeeded') {
       const customerId = event.data.object.customer;
       const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('stripe_customer_id', customerId);
+        .from('profiles').select('id').eq('stripe_customer_id', customerId);
 
       if (profiles && profiles.length > 0) {
         const userId = profiles[0].id;
@@ -265,6 +246,28 @@ app.get('/api/listing/:id', async (req, res) => {
   res.json(safe);
 });
 
+// ── GET /api/dealers ────────────────────────────────────────────────────────
+app.get('/api/dealers', async (req, res) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, dealer_active, created_at')
+    .eq('role', 'dealer')
+    .eq('dealer_active', true)
+    .order('created_at', { ascending: true });
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  const dealersWithCount = await Promise.all(data.map(async (dealer) => {
+    const { count } = await supabase
+      .from('listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', dealer.id)
+      .eq('status', 'Active');
+    return { ...dealer, listing_count: count || 0 };
+  }));
+
+  res.json(dealersWithCount);
+});
 
 // ── POST /api/dealer-checkout ───────────────────────────────────────────────
 app.post('/api/dealer-checkout', async (req, res) => {
@@ -300,7 +303,6 @@ app.post('/api/dealer-checkout', async (req, res) => {
 });
 
 // ── POST /api/seed-samples ──────────────────────────────────────────────────
-// Admin-only endpoint to insert sample listings
 app.post('/api/seed-samples', async (req, res) => {
   const adminKey = req.headers['x-admin-key'];
   if (adminKey !== process.env.ADMIN_KEY) {
