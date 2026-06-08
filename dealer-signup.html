@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dealer Sign Up | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero" style="background:linear-gradient(135deg,#0a1f5c,#1a4fa0)">
+  <div class="inner">
+    <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Dealer Sign Up</div>
+    <h1>Dealer Account</h1>
+    <p>Post unlimited inventory for one flat monthly fee. Cancel anytime.</p>
+  </div>
+</section>
+
+<main class="container">
+  <div class="split" style="max-width:900px;margin:0 auto">
+
+    <!-- FORM -->
+    <div class="panel">
+      <h2 style="margin-bottom:6px">Create Your Dealer Account</h2>
+      <p class="muted" style="font-size:14px;margin-bottom:24px">Fill in your dealership info and subscribe to start posting unlimited carts.</p>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Dealership Name *</label>
+          <input class="field" id="dBusinessName" placeholder="e.g. Villages Cart Pros">
+        </div>
+        <div class="form-group">
+          <label>Your Name *</label>
+          <input class="field" id="dName" placeholder="First and last name">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input class="field" id="dEmail" type="email" placeholder="your@dealership.com">
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input class="field" id="dPhone" type="tel" placeholder="(352) 555-0000">
+        </div>
+        <div class="form-group">
+          <label>Location *</label>
+          <select class="field" id="dLocation">
+            <option value="">Select community</option>
+            <option>The Villages</option>
+            <option>Lady Lake</option>
+            <option>Wildwood</option>
+            <option>Oxford</option>
+            <option>Leesburg</option>
+            <option>Other nearby</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Dealership Description</label>
+          <textarea class="field" id="dDesc" rows="3" placeholder="Tell buyers about your dealership — specialties, brands you carry, years in business, etc."></textarea>
+        </div>
+      </div>
+
+      <button class="btn btn-green btn-lg" style="width:100%;margin-top:20px" onclick="startDealerSignup()">Subscribe $49/mo and Create Account</button>
+      <p id="dealerError" style="color:#d94040;font-size:13px;margin-top:10px;display:none"></p>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="panel" style="background:linear-gradient(145deg,#0a1f5c,#1a4fa0);color:white;border:none">
+        <h3 style="color:white;margin-bottom:8px">🏢 Dealer Plan</h3>
+        <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:900;color:#7eb3ff;margin-bottom:6px">$49<span style="font-size:20px;font-weight:700">/mo</span></div>
+        <p style="color:#b8ccf8;font-size:14px;margin-bottom:20px">Cancel anytime. No setup fees.</p>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>Unlimited cart listings</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>🏢 Dealer badge on all listings</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>Up to 20 photos per listing</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>Edit or remove listings anytime</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>Listings hidden if subscription lapses</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:14px">
+            <span style="color:#7eb3ff;font-weight:900">✓</span>
+            <span>Appear in Dealers directory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:20px">
+        <h3 style="margin-bottom:12px">Already a dealer?</h3>
+        <p class="muted" style="font-size:14px;margin-bottom:16px">Sign in to manage your inventory.</p>
+        <a href="login.html" class="btn btn-green" style="width:100%;text-align:center">Sign In to Dashboard</a>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="footer-root"></div>
+
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('dealers.html');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+async function startDealerSignup() {
+  const required = {
+    dBusinessName: 'Dealership name',
+    dName: 'Your name',
+    dEmail: 'Email',
+    dPhone: 'Phone',
+    dLocation: 'Location',
+  };
+  const errEl = document.getElementById('dealerError');
+  errEl.style.display = 'none';
+
+  for(const [id, label] of Object.entries(required)) {
+    if(!document.getElementById(id).value) {
+      errEl.textContent = `Please fill in: ${label}`;
+      errEl.style.display = 'block';
+      document.getElementById(id).focus();
+      return;
+    }
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Redirecting to Stripe…';
+
+  const dealer = {
+    businessName: document.getElementById('dBusinessName').value,
+    name:         document.getElementById('dName').value,
+    email:        document.getElementById('dEmail').value,
+    phone:        document.getElementById('dPhone').value,
+    location:     document.getElementById('dLocation').value,
+    description:  document.getElementById('dDesc').value,
+  };
+
+  try {
+    const res  = await fetch('/api/dealer-checkout', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ dealer }),
+    });
+    const data = await res.json();
+    if(data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Could not create checkout session');
+    }
+  } catch(err) {
+    btn.disabled = false;
+    btn.textContent = 'Subscribe $49/mo and Create Account';
+    errEl.textContent = `Error: ${err.message}`;
+    errEl.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
