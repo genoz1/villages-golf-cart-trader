@@ -60,12 +60,12 @@ document.getElementById('nav-root').innerHTML = renderNav('');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-const supabase = window.supabase.createClient(
+const sb = window.supabase.createClient(
   'https://fkqapmylukshvotohqda.supabase.co',
   'sb_publishable_rQDfR2oKaVtRuCmts3BtbQ_d904l9zw'
 );
 
-supabase.auth.getSession().then(({ data }) => {
+sb.auth.getSession().then(({ data }) => {
   if(data.session) window.location.href = 'account.html';
 });
 
@@ -84,7 +84,7 @@ async function sendMagicLink() {
   btn.disabled = true;
   btn.textContent = 'Sending…';
 
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await sb.auth.signInWithOtp({
     email,
     options: {
       emailRedirectTo: window.location.origin + '/account.html'
