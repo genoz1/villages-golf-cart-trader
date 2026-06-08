@@ -111,9 +111,9 @@ function makeCard(l, showFeatured) {
     <div class="listing-img"><img src="${l.photo}" alt="${l.title}" onerror="this.parentElement.innerHTML='🛺'" style="width:100%;height:100%;object-fit:cover;border-radius:inherit"></div>
     <div class="card-body">
       ${l.isSample ? '<div class="sample-banner">Sample Listing</div>' : ''}
-      ${showFeatured && l.type==='Featured' ? '<span class="tag tag-gold">⭐ Featured</span>' : '<span class="tag">Local Listing</span>'}
+      ${showFeatured && l.type==='Featured' ? '<span class="tag tag-gold">⭐ Featured</span>' : l.type==='Dealer' ? '<span class="tag tag-blue">🏢 Dealer</span>' : '<span class="tag">Local Listing</span>'}
       <h3 style="font-size:16px;margin:6px 0">${l.title}</h3>
-      <div class="price" style="display:inline-block">${fmt(l.price)}</div>
+      <div class="price">${fmt(l.price)}</div>
       <p class="muted" style="font-size:13px;margin-bottom:8px;margin-top:4px">📍 ${l.location}, FL</p>
       <div class="specs">
         <span>${l.year}</span>
@@ -138,28 +138,6 @@ document.getElementById('stepsGrid').innerHTML = steps.map(s =>
   `<div class="step-card"><h3>${s.title}</h3><p>${s.desc}</p></div>`
 ).join('');
 
-// Load listings from database
-async function loadListings() {
-  try {
-    const res  = await fetch('/api/listings');
-    const data = await res.json();
-    const listings = data.map(normalize);
-    const featured = listings.filter(l => l.type === 'Featured');
-    const latest   = listings.filter(l => l.type !== 'Featured').slice(0, 3);
-
-    document.getElementById('featuredGrid').innerHTML = featured.length
-      ? featured.map(l => makeCard(l, true)).join('')
-      : '<p class="muted" style="padding:20px">No featured listings yet.</p>';
-
-    document.getElementById('latestGrid').innerHTML = latest.length
-      ? latest.map(l => makeCard(l, false)).join('')
-      : '<p class="muted" style="padding:20px">No listings yet — be the first to post!</p>';
-
-  } catch(e) {
-    console.error('Failed to load listings:', e);
-  }
-}
-
 function normalize(l) {
   return {
     id:          l.id,
@@ -172,11 +150,33 @@ function normalize(l) {
     seats:       l.seats,
     streetLegal: l.street_legal,
     location:    l.location,
-    type:        l.listing_type || 'Local',
+    type:        l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local',
     photo:       (l.photo_urls && l.photo_urls[0]) || '',
     isSample:    l.is_sample || false,
     daysLeft:    l.days_left || 30,
   };
+}
+
+async function loadListings() {
+  try {
+    const res  = await fetch('/api/listings');
+    const data = await res.json();
+    const listings = data.map(normalize);
+
+    const featured = listings.filter(l => l.type === 'Featured');
+    const latest   = listings.slice(0, 3);
+
+    document.getElementById('featuredGrid').innerHTML = featured.length
+      ? featured.map(l => makeCard(l, true)).join('')
+      : '<p class="muted" style="padding:20px">No featured listings yet.</p>';
+
+    document.getElementById('latestGrid').innerHTML = latest.length
+      ? latest.map(l => makeCard(l, false)).join('')
+      : '<p class="muted" style="padding:20px">No listings yet — be the first to post!</p>';
+
+  } catch(e) {
+    console.error('Failed to load listings:', e);
+  }
 }
 
 loadListings();
