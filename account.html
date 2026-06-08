@@ -19,8 +19,6 @@
 </section>
 
 <main class="container" id="mainContent" style="display:none">
-
-  <!-- SELLER VIEW -->
   <div id="sellerView" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px">
       <h2>My Listings</h2>
@@ -32,7 +30,6 @@
     <div id="sellerListings"></div>
   </div>
 
-  <!-- DEALER VIEW -->
   <div id="dealerView" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px">
       <div>
@@ -46,10 +43,8 @@
     </div>
     <div id="dealerListings"></div>
   </div>
-
 </main>
 
-<!-- NOT LOGGED IN -->
 <div id="notLoggedIn" style="display:none">
   <div class="container-sm" style="text-align:center;padding:80px 24px">
     <div style="font-size:56px;margin-bottom:16px">🔒</div>
@@ -62,7 +57,6 @@
   </div>
 </div>
 
-<!-- EDIT LISTING MODAL -->
 <div class="modal-overlay" id="editModal">
   <div class="modal" style="position:relative;max-width:560px">
     <button class="modal-close" onclick="closeModal('editModal')">✕</button>
@@ -92,7 +86,6 @@
   </div>
 </div>
 
-<!-- ADD CART MODAL (dealers only) -->
 <div class="modal-overlay" id="addCartModal">
   <div class="modal" style="position:relative;max-width:600px;max-height:90vh;overflow-y:auto">
     <button class="modal-close" onclick="closeModal('addCartModal')">✕</button>
@@ -190,7 +183,7 @@ document.getElementById('nav-root').innerHTML = renderNav('account.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-const supabase = window.supabase.createClient(
+const sb = window.supabase.createClient(
   'https://fkqapmylukshvotohqda.supabase.co',
   'sb_publishable_rQDfR2oKaVtRuCmts3BtbQ_d904l9zw'
 );
@@ -199,7 +192,7 @@ let currentUser = null;
 let currentProfile = null;
 
 async function init() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
 
   if(!session) {
     document.getElementById('notLoggedIn').style.display = 'block';
@@ -209,14 +202,10 @@ async function init() {
 
   currentUser = session.user;
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', currentUser.id)
-    .single();
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
 
   if(!profile) {
-    await supabase.from('profiles').insert([{
+    await sb.from('profiles').insert([{
       id:        currentUser.id,
       email:     currentUser.email,
       full_name: currentUser.user_metadata?.full_name || '',
@@ -246,22 +235,11 @@ async function init() {
 }
 
 async function loadSellerListings() {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('seller_email', currentUser.email)
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await sb.from('listings').select('*').eq('seller_email', currentUser.email).order('created_at', { ascending: false });
   const container = document.getElementById('sellerListings');
 
   if(error || !data || data.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="icon">🛺</div>
-        <h3>No listings yet</h3>
-        <p>Post your first cart and it will appear here.</p>
-        <a href="sell.html" class="btn btn-gold">Post Your Cart</a>
-      </div>`;
+    container.innerHTML = `<div class="empty-state"><div class="icon">🛺</div><h3>No listings yet</h3><p>Post your first cart and it will appear here.</p><a href="sell.html" class="btn btn-gold">Post Your Cart</a></div>`;
     return;
   }
 
@@ -286,7 +264,7 @@ async function loadSellerListings() {
           <span style="font-size:12px;color:var(--muted);white-space:nowrap">${daysLeft} days left</span>
         </div>
         <div class="listing-row-actions">
-          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${l.description?.replace(/`/g,"'")}\`)">✏️ Edit</button>
+          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${(l.description||'').replace(/`/g,"'")}\`)">✏️ Edit</button>
           <button class="btn btn-light btn-sm" onclick="deleteListing('${l.id}')">🗑️ Remove</button>
           ${l.status === 'Active' ? `<a href="listing-detail.html?id=${l.id}" class="btn btn-green btn-sm" target="_blank">👁 View</a>` : ''}
         </div>
@@ -296,21 +274,11 @@ async function loadSellerListings() {
 }
 
 async function loadDealerListings() {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await sb.from('listings').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
   const container = document.getElementById('dealerListings');
 
   if(error || !data || data.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="icon">🏢</div>
-        <h3>No inventory yet</h3>
-        <p>Add your first cart using the button above.</p>
-      </div>`;
+    container.innerHTML = `<div class="empty-state"><div class="icon">🏢</div><h3>No inventory yet</h3><p>Add your first cart using the button above.</p></div>`;
     return;
   }
 
@@ -329,7 +297,7 @@ async function loadDealerListings() {
           <span class="tag tag-gold">$${Number(l.price).toLocaleString()}</span>
         </div>
         <div class="listing-row-actions">
-          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${l.description?.replace(/`/g,"'")}\`)">✏️ Edit</button>
+          <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${(l.description||'').replace(/`/g,"'")}\`)">✏️ Edit</button>
           <button class="btn btn-light btn-sm" onclick="deleteListing('${l.id}')">🗑️ Remove</button>
           ${l.status === 'Active' ? `<a href="listing-detail.html?id=${l.id}" class="btn btn-green btn-sm" target="_blank">👁 View</a>` : ''}
         </div>
@@ -352,11 +320,7 @@ async function saveEdit() {
   const status = document.getElementById('editStatus').value;
   const desc   = document.getElementById('editDesc').value;
 
-  const { error } = await supabase
-    .from('listings')
-    .update({ price, status, description: desc })
-    .eq('id', id);
-
+  const { error } = await sb.from('listings').update({ price, status, description: desc }).eq('id', id);
   if(error) { showToast('Error saving changes.'); return; }
   closeModal('editModal');
   showToast('✅ Listing updated!');
@@ -365,7 +329,7 @@ async function saveEdit() {
 
 async function deleteListing(id) {
   if(!confirm('Remove this listing? This cannot be undone.')) return;
-  const { error } = await supabase.from('listings').delete().eq('id', id);
+  const { error } = await sb.from('listings').delete().eq('id', id);
   if(error) { showToast('Error removing listing.'); return; }
   showToast('Listing removed.');
   currentProfile.role === 'dealer' ? loadDealerListings() : loadSellerListings();
@@ -412,7 +376,7 @@ async function addDealerCart() {
   const model = document.getElementById('acModel').value;
   const year  = document.getElementById('acYear').value;
 
-  const { error } = await supabase.from('listings').insert([{
+  const { error } = await sb.from('listings').insert([{
     title:        `${year} ${make} ${model}`,
     make, model, year,
     price:        parseInt(document.getElementById('acPrice').value),
@@ -443,7 +407,7 @@ async function addDealerCart() {
 }
 
 async function signOut() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   window.location.href = 'index.html';
 }
 
