@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sign In | Villages Golf Cart Trader</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="nav-root"></div>
+
+<section class="page-hero">
+  <div class="inner">
+    <h1>Sign In</h1>
+    <p>Enter your email to receive a magic sign-in link — no password needed.</p>
+  </div>
+</section>
+
+<main class="container-sm">
+  <div class="panel" style="max-width:480px;margin:0 auto">
+
+    <div id="loginForm">
+      <h2 style="margin-bottom:8px">Welcome back</h2>
+      <p class="muted" style="margin-bottom:24px;font-size:15px">We'll send a sign-in link to your email. Click it to access your account.</p>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Email address</label>
+        <input class="field" id="emailInput" type="email" placeholder="your@email.com" style="font-size:16px;padding:14px">
+      </div>
+
+      <button class="btn btn-green btn-lg" style="width:100%" onclick="sendMagicLink()">Send Sign-In Link</button>
+      <p id="loginError" style="color:#d94040;font-size:13px;margin-top:10px;display:none"></p>
+
+      <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--line);text-align:center">
+        <p class="muted" style="font-size:14px;margin-bottom:12px">Don't have an account yet?</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a href="sell.html" class="btn btn-light">Sell Your Cart — $9.99</a>
+          <a href="dealer-signup.html" class="btn btn-outline">Dealer Sign Up — $49/mo</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="successMsg" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:56px;margin-bottom:16px">📬</div>
+      <h2 style="margin-bottom:8px">Check your email!</h2>
+      <p class="muted" style="font-size:15px;line-height:1.6">We sent a sign-in link to <strong id="sentEmail"></strong>. Click the link in the email to access your account.</p>
+      <p class="muted" style="font-size:13px;margin-top:16px">Didn't get it? Check your spam folder or <button onclick="resetForm()" style="background:none;border:none;color:var(--green);font-weight:700;cursor:pointer;font-size:13px">try again</button>.</p>
+    </div>
+
+  </div>
+</main>
+
+<div id="footer-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+document.getElementById('nav-root').innerHTML = renderNav('');
+document.getElementById('footer-root').innerHTML = renderFooter();
+initNav();
+
+const supabase = window.supabase.createClient(
+  'https://fkqapmylukshvotohqda.supabase.co',
+  'sb_publishable_rQDfR2oKaVtRuCmts3BtbQ_d904l9zw'
+);
+
+supabase.auth.getSession().then(({ data }) => {
+  if(data.session) window.location.href = 'account.html';
+});
+
+async function sendMagicLink() {
+  const email = document.getElementById('emailInput').value.trim();
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if(!email) {
+    errEl.textContent = 'Please enter your email address.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.origin + '/account.html'
+    }
+  });
+
+  if(error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Send Sign-In Link';
+  } else {
+    document.getElementById('sentEmail').textContent = email;
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('successMsg').style.display = 'block';
+  }
+}
+
+function resetForm() {
+  document.getElementById('loginForm').style.display = 'block';
+  document.getElementById('successMsg').style.display = 'none';
+  document.getElementById('emailInput').value = '';
+}
+
+document.getElementById('emailInput').addEventListener('keypress', e => {
+  if(e.key === 'Enter') sendMagicLink();
+});
+</script>
+</body>
+</html>
