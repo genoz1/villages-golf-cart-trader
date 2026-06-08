@@ -15,13 +15,12 @@
   <div class="inner">
     <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Browse Carts</div>
     <h1>Browse Golf Carts</h1>
-    <p>Search local carts for sale in The Villages and surrounding communities.</p>
+    <p id="pageSubtitle">Search local carts for sale in The Villages and surrounding communities.</p>
   </div>
 </section>
 
 <main class="container">
 
-  <!-- FILTER BAR -->
   <div class="filterbar">
     <input class="field" id="fKeyword" placeholder="Search keyword, make, model…" type="text">
     <select class="field" id="fMake">
@@ -57,10 +56,8 @@
     </select>
   </div>
 
-  <!-- RESULTS GRID -->
   <div class="grid grid-3" id="listingsGrid"></div>
 
-  <!-- EMPTY STATE -->
   <div class="empty-state" id="emptyState" style="display:none">
     <div class="icon">🔍</div>
     <h3>No carts match your filters</h3>
@@ -78,15 +75,19 @@ document.getElementById('nav-root').innerHTML = renderNav('listings.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
-const params = new URLSearchParams(location.search);
-if(params.get('q')) document.getElementById('fKeyword').value = params.get('q');
-if(params.get('power')) document.getElementById('fPower').value = params.get('power');
-if(params.get('make')) document.getElementById('fMake').value = params.get('make');
+const params   = new URLSearchParams(location.search);
+const dealerId = params.get('dealer_id') || '';
+
+if(params.get('q'))     document.getElementById('fKeyword').value = params.get('q');
+if(params.get('power')) document.getElementById('fPower').value   = params.get('power');
+if(params.get('make'))  document.getElementById('fMake').value    = params.get('make');
+if(dealerId)            document.getElementById('pageSubtitle').textContent = 'Showing inventory from this dealer.';
 
 function makeCard(l) {
   const isExpiring = l.daysLeft <= 3;
   const tagHtml = l.type === 'Featured'
     ? '<span class="tag tag-gold">⭐ Featured</span>'
+    : l.type === 'Dealer' ? '<span class="tag tag-blue">🏢 Dealer</span>'
     : isExpiring ? '<span class="tag tag-red">⏰ Expiring Soon</span>'
     : '<span class="tag">Local Listing</span>';
   return `
@@ -118,13 +119,15 @@ function applyFilters() {
   const seats = document.getElementById('fSeats').value;
   const sort  = document.getElementById('fSort').value;
 
-  let results = (ALL_LISTINGS.length ? ALL_LISTINGS : LISTINGS).filter(l => l.status === 'Active');
-  if(kw) results = results.filter(l =>
-    l.title.toLowerCase().includes(kw) || l.make.toLowerCase().includes(kw) || l.model.toLowerCase().includes(kw) || l.location.toLowerCase().includes(kw)
+  let results = ALL_LISTINGS.filter(l => l.status === 'Active');
+  if(dealerId) results = results.filter(l => l.user_id === dealerId);
+  if(kw)    results = results.filter(l =>
+    l.title.toLowerCase().includes(kw) || l.make.toLowerCase().includes(kw) ||
+    l.model.toLowerCase().includes(kw) || l.location.toLowerCase().includes(kw)
   );
   if(make)  results = results.filter(l => l.make === make);
   if(power) results = results.filter(l => l.power === power);
-  if(seats) results = results.filter(l => l.seats === parseInt(seats));
+  if(seats) results = results.filter(l => String(l.seats) === seats);
 
   if(sort === 'price-asc')  results.sort((a,b) => a.price - b.price);
   else if(sort === 'price-desc') results.sort((a,b) => b.price - a.price);
@@ -146,9 +149,9 @@ function applyFilters() {
 
 function clearFilters() {
   document.getElementById('fKeyword').value = '';
-  document.getElementById('fMake').value = '';
-  document.getElementById('fPower').value = '';
-  document.getElementById('fSeats').value = '';
+  document.getElementById('fMake').value    = '';
+  document.getElementById('fPower').value   = '';
+  document.getElementById('fSeats').value   = '';
   applyFilters();
 }
 
@@ -166,11 +169,12 @@ function normalize(l) {
     seats:       l.seats,
     streetLegal: l.street_legal,
     location:    l.location,
-    type:        l.listing_type || 'Local',
+    type:        l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local',
     photo:       (l.photo_urls && l.photo_urls[0]) || '',
     isSample:    l.is_sample || false,
     daysLeft:    l.days_left || 30,
     status:      l.status,
+    user_id:     l.user_id || null,
   };
 }
 
@@ -184,7 +188,7 @@ async function init() {
     applyFilters();
   } catch(e) {
     console.error('Failed to load listings:', e);
-    ALL_LISTINGS = LISTINGS;
+    ALL_LISTINGS = [];
     applyFilters();
   }
 }
