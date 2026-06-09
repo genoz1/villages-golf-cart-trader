@@ -4,7 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Listing Detail | Villages Golf Cart Trader</title>
+  <meta name="description" content="">
+  <meta property="og:type"        content="product">
+  <meta property="og:title"       content="">
+  <meta property="og:description" content="">
+  <meta property="og:image"       content="">
+  <meta property="og:url"         content="">
+  <meta property="og:site_name"   content="Villages Golf Cart Trader">
+  <meta name="twitter:card"       content="summary_large_image">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .thumb img { width:100%; height:100%; object-fit:cover; border-radius:10px; }
+    .thumb.active { border-color: var(--green2); }
+  </style>
 </head>
 <body>
 
@@ -22,12 +34,7 @@
 
     <div>
       <div class="photo-main" id="photoMain" style="overflow:hidden"></div>
-      <div class="thumbs">
-        <div class="thumb">🛺</div>
-        <div class="thumb">📸</div>
-        <div class="thumb">📸</div>
-        <div class="thumb">📸</div>
-      </div>
+      <div class="thumbs" id="thumbsContainer"></div>
       <div class="panel" style="margin-top:20px">
         <h3 style="margin-bottom:12px">Description</h3>
         <p id="listingDesc" style="line-height:1.7;color:var(--muted);font-size:15px"></p>
@@ -97,15 +104,32 @@ initNav();
 
 const urlId = new URLSearchParams(location.search).get('id');
 
-function populateListing(l) {
-  const photo = (l.photo_urls && l.photo_urls[0]) || l.photo || '';
-  const type  = l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local';
-
+function setMainPhoto(url, title) {
   const photoMain = document.getElementById('photoMain');
-  if(photo) {
-    photoMain.innerHTML = `<img src="${photo}" alt="${l.title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
+  photoMain.innerHTML = `<img src="${url}" alt="${title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
+}
+
+function populateListing(l) {
+  const photos = (l.photo_urls && l.photo_urls.length > 0) ? l.photo_urls : (l.photo ? [l.photo] : []);
+  const type   = l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local';
+
+  // Main photo
+  if(photos.length > 0) {
+    setMainPhoto(photos[0], l.title);
   } else {
-    photoMain.textContent = '🛺';
+    document.getElementById('photoMain').textContent = '🛺';
+  }
+
+  // Thumbnails
+  const thumbsContainer = document.getElementById('thumbsContainer');
+  if(photos.length > 1) {
+    thumbsContainer.innerHTML = photos.map((url, i) => `
+      <div class="thumb ${i===0?'active':''}" onclick="switchPhoto('${url}', '${l.title}', this)">
+        <img src="${url}" alt="Photo ${i+1}" onerror="this.parentElement.textContent='📸'">
+      </div>
+    `).join('');
+  } else {
+    thumbsContainer.innerHTML = '';
   }
 
   document.title = `${l.title} | Villages Golf Cart Trader`;
@@ -137,6 +161,38 @@ function populateListing(l) {
   document.getElementById('detailGrid').innerHTML = details.map(([k,v]) =>
     `<div class="detail-item"><strong>${k}</strong><span>${v}</span></div>`
   ).join('');
+
+  // Update OG tags
+  document.querySelector('meta[property="og:title"]').setAttribute('content', l.title);
+  document.querySelector('meta[property="og:description"]').setAttribute('content', l.description || '');
+  document.querySelector('meta[property="og:image"]').setAttribute('content', photos[0] || '');
+  document.querySelector('meta[property="og:url"]').setAttribute('content', location.href);
+
+  // Schema.org structured data
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": l.title,
+    "description": l.description,
+    "image": photos,
+    "offers": {
+      "@type": "Offer",
+      "priceCurrency": "USD",
+      "price": l.price,
+      "availability": "https://schema.org/InStock",
+      "seller": { "@type": "Person", "name": l.seller_name || 'Private Seller' }
+    }
+  };
+  const schemaTag = document.createElement('script');
+  schemaTag.type = 'application/ld+json';
+  schemaTag.text = JSON.stringify(schema);
+  document.head.appendChild(schemaTag);
+}
+
+function switchPhoto(url, title, el) {
+  setMainPhoto(url, title);
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
 }
 
 async function loadListing() {
@@ -153,7 +209,6 @@ async function loadListing() {
     }
   } catch(e) {}
 
-  // Fallback to hardcoded LISTINGS array
   const numId   = parseInt(urlId) || 1;
   const listing = LISTINGS.find(x => x.id === numId) || LISTINGS[0];
   populateListing({
