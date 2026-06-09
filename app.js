@@ -42,7 +42,6 @@ function getListingId() {
 // ── NAV ─────────────────────────────────────────────────────────────────────
 function renderNav(activePage) {
   const pages = [
-    ['index.html','Home'],
     ['listings.html','Browse Carts'],
     ['sell.html','Sell Your Cart'],
     ['dealers.html','Dealers'],
@@ -63,7 +62,7 @@ function renderNav(activePage) {
     <div class="nav-inner">
       <a class="brand-text" href="index.html">Villages Golf Cart Trader</a>
       <nav class="nav-links">${links}</nav>
-      <a class="btn btn-gold btn-sm" href="sell.html">Post Your Cart</a>
+      <a class="btn btn-gold btn-sm nav-cta" href="sell.html">Post Your Cart</a>
       <button class="hamburger" id="hamburger" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
@@ -111,7 +110,7 @@ function renderFooter() {
       </div>
     </div>
     <div class="footer-bottom">
-      <span>© 2025 Villages Golf Cart Trader. All rights reserved.</span>
+      <span>© 2026 Villages Golf Cart Trader. All rights reserved.</span>
       <span>villagesgolfcarttrader.com</span>
     </div>
   </footer>
