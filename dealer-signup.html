@@ -59,9 +59,20 @@
           <label>Dealership Description</label>
           <textarea class="field" id="dDesc" rows="3" placeholder="Tell buyers about your dealership — specialties, brands you carry, years in business, etc."></textarea>
         </div>
+
+        <!-- PROMO CODE -->
+        <div class="form-group full">
+          <label>Promo Code (optional)</label>
+          <div style="display:flex;gap:8px">
+            <input class="field" id="dealerPromoCode" placeholder="Enter code" style="text-transform:uppercase;flex:1">
+            <button class="btn btn-light" type="button" onclick="applyDealerPromo()">Apply</button>
+          </div>
+          <p id="dealerPromoMsg" style="font-size:13px;margin-top:6px;display:none"></p>
+        </div>
+
       </div>
 
-      <button class="btn btn-green btn-lg" style="width:100%;margin-top:20px" onclick="startDealerSignup()">Subscribe $49/mo and Create Account</button>
+      <button class="btn btn-green btn-lg" id="dealerBtn" style="width:100%;margin-top:20px" onclick="startDealerSignup()">Subscribe $49/mo and Create Account</button>
       <p id="dealerError" style="color:#d94040;font-size:13px;margin-top:10px;display:none"></p>
     </div>
 
@@ -117,28 +128,62 @@ document.getElementById('nav-root').innerHTML = renderNav('dealers.html');
 document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
+let validDealerPromo = null;
+
+async function applyDealerPromo() {
+  const code = document.getElementById('dealerPromoCode').value.trim().toUpperCase();
+  const msg  = document.getElementById('dealerPromoMsg');
+  if(!code) return;
+
+  try {
+    const res  = await fetch('/api/validate-promo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ code, listingType: 'dealer' })
+    });
+    const data = await res.json();
+    if(data.valid) {
+      validDealerPromo = code;
+      msg.style.display  = 'block';
+      msg.style.color    = '#0d5b4a';
+      msg.textContent    = '✅ Promo code applied — first month FREE, then $49/mo!';
+      document.getElementById('dealerBtn').textContent = 'Start Free Month and Create Account 🎉';
+      document.getElementById('dealerBtn').style.background = 'linear-gradient(160deg, #8bd45f, #5fa832)';
+    } else {
+      validDealerPromo = null;
+      msg.style.display = 'block';
+      msg.style.color   = '#d94040';
+      msg.textContent   = data.error || 'Invalid or expired promo code.';
+    }
+  } catch(e) {
+    msg.style.display = 'block';
+    msg.style.color   = '#d94040';
+    msg.textContent   = 'Could not validate code. Please try again.';
+  }
+}
+
 async function startDealerSignup() {
   const required = {
     dBusinessName: 'Dealership name',
-    dName: 'Your name',
-    dEmail: 'Email',
-    dPhone: 'Phone',
-    dLocation: 'Location',
+    dName:         'Your name',
+    dEmail:        'Email',
+    dPhone:        'Phone',
+    dLocation:     'Location',
   };
   const errEl = document.getElementById('dealerError');
   errEl.style.display = 'none';
 
   for(const [id, label] of Object.entries(required)) {
     if(!document.getElementById(id).value) {
-      errEl.textContent = `Please fill in: ${label}`;
+      errEl.textContent  = `Please fill in: ${label}`;
       errEl.style.display = 'block';
       document.getElementById(id).focus();
       return;
     }
   }
 
-  const btn = event.target;
-  btn.disabled = true;
+  const btn = document.getElementById('dealerBtn');
+  btn.disabled    = true;
   btn.textContent = 'Redirecting to Stripe…';
 
   const dealer = {
@@ -154,7 +199,7 @@ async function startDealerSignup() {
     const res  = await fetch('/api/dealer-checkout', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ dealer }),
+      body:    JSON.stringify({ dealer, promoCode: validDealerPromo }),
     });
     const data = await res.json();
     if(data.url) {
@@ -163,9 +208,9 @@ async function startDealerSignup() {
       throw new Error(data.error || 'Could not create checkout session');
     }
   } catch(err) {
-    btn.disabled = false;
-    btn.textContent = 'Subscribe $49/mo and Create Account';
-    errEl.textContent = `Error: ${err.message}`;
+    btn.disabled    = false;
+    btn.textContent = validDealerPromo ? 'Start Free Month and Create Account 🎉' : 'Subscribe $49/mo and Create Account';
+    errEl.textContent  = `Error: ${err.message}`;
     errEl.style.display = 'block';
   }
 }
