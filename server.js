@@ -412,6 +412,96 @@ app.get('/api/dealers', async (req, res) => {
   res.json(dealersWithCount);
 });
 
+// ── RSS feeds for social auto-posting ───────────────────────────────────────
+const xmlEscape = (s = '') => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+
+function rssItem(l, siteUrl, guid, pubDate) {
+  const link  = `${siteUrl}/listing-detail.html?id=${l.id}`;
+  const photo = (Array.isArray(l.photo_urls) && l.photo_urls[0]) || `${siteUrl}/assets/hero-logo.png`;
+  const price = Number(l.price).toLocaleString('en-US');
+  const bits  = [l.power, l.seats ? `${l.seats} seats` : null, l.street_legal ? 'street legal' : null]
+    .filter(Boolean).join(' • ');
+  const desc  = `🛺 ${l.title} — $${price} in ${l.location}. ${bits}. ` +
+    `${(l.description || '').slice(0, 180)}${(l.description || '').length > 180 ? '…' : ''} ` +
+    `See all photos & contact the seller: ${link}`;
+  return `    <item>
+      <title>${xmlEscape(`${l.title} — $${price} (${l.location})`)}</title>
+      <link>${xmlEscape(link)}</link>
+      <guid isPermaLink="false">${xmlEscape(guid)}</guid>
+      <pubDate>${pubDate.toUTCString()}</pubDate>
+      <description>${xmlEscape(desc)}</description>
+      <enclosure url="${xmlEscape(photo)}" type="image/jpeg" length="0"/>
+    </item>`;
+}
+
+function rssWrap(title, description, siteUrl, itemsXml) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>${xmlEscape(title)}</title>
+    <link>${xmlEscape(siteUrl)}</link>
+    <description>${xmlEscape(description)}</description>
+${itemsXml}
+  </channel>
+</rss>`;
+}
+
+// New active listings (latest 10, real listings only) — for "new cart" auto-posts
+app.get('/feed/listings.xml', async (req, res) => {
+  const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Active')
+    .eq('is_sample', false)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  if (error) return res.status(500).send('Feed error');
+
+  const items = (data || [])
+    .map(l => rssItem(l, siteUrl, `listing-${l.id}`, new Date(l.created_at)))
+    .join('\n');
+
+  res.header('Content-Type', 'application/xml');
+  res.send(rssWrap(
+    'Villages Golf Cart Trader — New Listings',
+    'The latest golf carts listed for sale in The Villages, FL area.',
+    siteUrl, items
+  ));
+});
+
+// Rotating featured cart (round-robin through active listings) — for recurring posts
+app.get('/feed/featured.xml', async (req, res) => {
+  const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
+  const hours   = Number(process.env.FEATURED_INTERVAL_HOURS) || 8; // one new featured cart every N hours
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Active')
+    .eq('is_sample', false)
+    .order('id', { ascending: true });
+
+  if (error) return res.status(500).send('Feed error');
+
+  let items = '';
+  if (data && data.length > 0) {
+    const bucketMs = hours * 60 * 60 * 1000;
+    const bucket   = Math.floor(Date.now() / bucketMs);
+    const pick     = data[bucket % data.length]; // cycles through every cart before repeating
+    items = rssItem(pick, siteUrl, `featured-${pick.id}-${bucket}`, new Date(bucket * bucketMs));
+  }
+
+  res.header('Content-Type', 'application/xml');
+  res.send(rssWrap(
+    'Villages Golf Cart Trader — Featured Carts',
+    'A rotating featured golf cart for sale in The Villages, FL area.',
+    siteUrl, items
+  ));
+});
+
 // ── GET /sitemap.xml ────────────────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
   const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
