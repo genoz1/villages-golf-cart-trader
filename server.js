@@ -72,17 +72,56 @@ app.post('/api/upload-photos', upload.array('photos', 20), async (req, res) => {
   }
 });
 
+// ── POST /api/validate-promo ────────────────────────────────────────────────
+app.post('/api/validate-promo', async (req, res) => {
+  const { code, listingType } = req.body;
+  if(!code) return res.status(400).json({ valid: false, error: 'No code provided' });
+
+  const { data, error } = await supabase
+    .from('promo_codes')
+    .select('*')
+    .eq('code', code.toUpperCase())
+    .eq('active', true)
+    .single();
+
+  if(error || !data) return res.json({ valid: false, error: 'Invalid or expired promo code.' });
+  if(data.uses >= data.max_uses) return res.json({ valid: false, error: 'This promo code has reached its limit.' });
+  if(data.listing_type !== listingType) return res.json({ valid: false, error: `This code is only valid for ${data.listing_type} listings.` });
+
+  res.json({ valid: true, listingType: data.listing_type });
+});
+
 // ── POST /api/create-checkout ───────────────────────────────────────────────
 app.post('/api/create-checkout', async (req, res) => {
   try {
-    const { listingType = 'private', listing, photoUrls = [] } = req.body;
+    const { listingType = 'private', listing, photoUrls = [], promoCode } = req.body;
 
     if (!listing || !listing.title) {
       return res.status(400).json({ error: 'Listing data required' });
     }
 
+    // Validate promo code if provided
+    let isFree = false;
+    if(promoCode) {
+      const { data: promo } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCode.toUpperCase())
+        .eq('active', true)
+        .eq('listing_type', 'private')
+        .single();
+
+      if(promo && promo.uses < promo.max_uses) {
+        isFree = true;
+        await supabase
+          .from('promo_codes')
+          .update({ uses: promo.uses + 1, active: promo.uses + 1 < promo.max_uses })
+          .eq('id', promo.id);
+      }
+    }
+
     const priceId = PRICES[listingType];
-    if (!priceId) {
+    if (!priceId && !isFree) {
       return res.status(400).json({ error: `Unknown listing type: ${listingType}` });
     }
 
@@ -103,7 +142,7 @@ app.post('/api/create-checkout', async (req, res) => {
         seller_email:     listing.email,
         seller_phone:     listing.phone,
         photo_urls:       photoUrls,
-        status:           'Pending',
+        status:           isFree ? 'Active' : 'Pending',
         listing_type:     listingType === 'featured' ? 'Featured' : 'Local',
         is_sample:        false,
         days_left:        30,
@@ -113,7 +152,12 @@ app.post('/api/create-checkout', async (req, res) => {
 
     if (error) throw new Error(error.message);
 
-    const siteUrl     = process.env.SITE_URL || 'http://localhost:3000';
+    // If free listing skip Stripe and return directly
+    if(isFree) {
+      return res.json({ free: true, listingId: data.id });
+    }
+
+    const siteUrl     = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
     const isRecurring = listingType === 'dealer';
 
     const session = await stripe.checkout.sessions.create({
@@ -260,14 +304,34 @@ app.get('/api/listing/:id', async (req, res) => {
 // ── POST /api/dealer-checkout ───────────────────────────────────────────────
 app.post('/api/dealer-checkout', async (req, res) => {
   try {
-    const { dealer } = req.body;
+    const { dealer, promoCode } = req.body;
     if (!dealer || !dealer.email) {
       return res.status(400).json({ error: 'Dealer info required' });
     }
 
-    const siteUrl = process.env.SITE_URL || 'http://localhost:3000';
+    // Check dealer promo code
+    let trialDays = 0;
+    if(promoCode) {
+      const { data: promo } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', promoCode.toUpperCase())
+        .eq('active', true)
+        .eq('listing_type', 'dealer')
+        .single();
 
-    const session = await stripe.checkout.sessions.create({
+      if(promo && promo.uses < promo.max_uses) {
+        trialDays = 30;
+        await supabase
+          .from('promo_codes')
+          .update({ uses: promo.uses + 1, active: promo.uses + 1 < promo.max_uses })
+          .eq('id', promo.id);
+      }
+    }
+
+    const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
+
+    const sessionParams = {
       mode: 'subscription',
       line_items: [{ price: process.env.STRIPE_PRICE_DEALER, quantity: 1 }],
       customer_email: dealer.email,
@@ -281,8 +345,13 @@ app.post('/api/dealer-checkout', async (req, res) => {
       },
       success_url: `${siteUrl}/account.html?dealer=new`,
       cancel_url:  `${siteUrl}/dealer-signup.html?cancelled=1`,
-    });
+    };
 
+    if(trialDays > 0) {
+      sessionParams.subscription_data = { trial_period_days: trialDays };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     res.json({ url: session.url });
   } catch (err) {
     console.error('Dealer checkout error:', err.message);
