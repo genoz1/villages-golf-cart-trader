@@ -85,7 +85,14 @@ app.post('/api/validate-promo', async (req, res) => {
     .single();
 
   if(error || !data) return res.json({ valid: false, error: 'Invalid or expired promo code.' });
-  if(data.uses >= data.max_uses) return res.json({ valid: false, error: 'This promo code has reached its limit.' });
+
+  if(data.uses >= data.max_uses) {
+    const msg = data.listing_type === 'dealer'
+      ? 'Sorry, this promo code has been claimed by all 5 dealers. You can still sign up for just $49/month — cancel anytime!'
+      : 'Sorry, this promo code has been claimed by all 20 sellers. You can still list your cart for just $9.99 for 30 days!';
+    return res.json({ valid: false, error: msg });
+  }
+
   if(data.listing_type !== listingType) return res.json({ valid: false, error: `This code is only valid for ${data.listing_type} listings.` });
 
   res.json({ valid: true, listingType: data.listing_type });
