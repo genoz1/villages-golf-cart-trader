@@ -502,6 +502,78 @@ app.get('/feed/featured.xml', async (req, res) => {
   ));
 });
 
+// ── Private stats page (requires ADMIN_KEY env var) ─────────────────────────
+function etDayStart(daysAgo = 0) {
+  const now = new Date();
+  const etNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const offsetMs = now.getTime() - etNow.getTime();
+  etNow.setHours(0, 0, 0, 0);
+  etNow.setDate(etNow.getDate() - daysAgo);
+  return new Date(etNow.getTime() + offsetMs);
+}
+
+app.get('/admin/stats', async (req, res) => {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey || req.query.key !== adminKey) {
+    return res.status(404).send('Not found');
+  }
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('id, title, price, location, listing_type, status, created_at')
+    .eq('is_sample', false)
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).send('Stats error');
+
+  const all = data || [];
+  const today = etDayStart(0), yesterday = etDayStart(1), week = etDayStart(6);
+  const cAt = l => new Date(l.created_at);
+  const stats = {
+    today:     all.filter(l => cAt(l) >= today).length,
+    yesterday: all.filter(l => cAt(l) >= yesterday && cAt(l) < today).length,
+    week:      all.filter(l => cAt(l) >= week).length,
+    active:    all.filter(l => l.status === 'Active').length,
+    total:     all.length,
+  };
+
+  const recentRows = all.slice(0, 15).map(l => `
+    <tr>
+      <td>${new Date(l.created_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+      <td>${String(l.title || '').replace(/</g, '&lt;')}</td>
+      <td>$${Number(l.price).toLocaleString()}</td>
+      <td>${String(l.location || '').replace(/</g, '&lt;')}</td>
+      <td>${l.status}</td>
+    </tr>`).join('');
+
+  res.send(`<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Listing Stats</title>
+<style>
+  body{font-family:-apple-system,system-ui,sans-serif;margin:24px;background:#f6f7f4;color:#1d2b1f}
+  h1{font-size:22px} .cards{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
+  .card{background:#fff;border:1px solid #dde3da;border-radius:10px;padding:16px 22px;min-width:120px}
+  .card .n{font-size:30px;font-weight:700} .card .l{color:#5d6b5e;font-size:13px;margin-top:4px}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dde3da;border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;font-size:14px;border-bottom:1px solid #eef1ec}
+  th{background:#f0f3ee;color:#4a584b} caption{text-align:left;font-weight:600;margin:8px 0;font-size:16px}
+</style></head><body>
+  <h1>🛺 Villages Golf Cart Trader — Listing Stats</h1>
+  <div class="cards">
+    <div class="card"><div class="n">${stats.today}</div><div class="l">New today</div></div>
+    <div class="card"><div class="n">${stats.yesterday}</div><div class="l">Yesterday</div></div>
+    <div class="card"><div class="n">${stats.week}</div><div class="l">Last 7 days</div></div>
+    <div class="card"><div class="n">${stats.active}</div><div class="l">Active now</div></div>
+    <div class="card"><div class="n">${stats.total}</div><div class="l">All-time</div></div>
+  </div>
+  <table>
+    <caption>15 most recent listings</caption>
+    <tr><th>Posted (ET)</th><th>Title</th><th>Price</th><th>Location</th><th>Status</th></tr>
+    ${recentRows || '<tr><td colspan="5">No listings yet — go get those dealers! 🛺</td></tr>'}
+  </table>
+</body></html>`);
+});
+
 // ── GET /sitemap.xml ────────────────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
   const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
