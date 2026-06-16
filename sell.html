@@ -14,7 +14,7 @@
   <div class="inner">
     <div class="breadcrumb"><a href="index.html">Home</a><span>›</span> Sell Your Cart</div>
     <h1>Sell Your Golf Cart</h1>
-    <p>Automatic publishing after payment. Edit your listing anytime from your account.</p>
+    <p>Free to list. Goes live immediately. Edit your listing anytime from your account.</p>
   </div>
 </section>
 
@@ -24,7 +24,7 @@
     <!-- FORM -->
     <div class="panel" id="formPanel">
       <h2 style="margin-bottom:6px">Create Your Listing</h2>
-      <p class="muted" style="font-size:14px;margin-bottom:24px">Fill in your cart details below. You'll pay after reviewing.</p>
+      <p class="muted" style="font-size:14px;margin-bottom:24px">Fill in your cart details below. Listing is free — you'll review before publishing.</p>
 
       <div class="form-grid" id="step1">
 
@@ -162,7 +162,7 @@
         </div>
 
         <div class="full">
-          <button class="btn btn-gold btn-lg" style="width:100%" onclick="submitListing()">Continue to Payment →</button>
+          <button class="btn btn-gold btn-lg" style="width:100%" onclick="submitListing()">Continue →</button>
         </div>
 
       </div>
@@ -183,7 +183,7 @@
           </div>
           <div style="display:flex;gap:12px;align-items:flex-start">
             <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">3</div>
-            <div><strong>Pay and publish</strong><br><span class="muted" style="font-size:14px">Your listing goes live automatically after payment.</span></div>
+            <div><strong>Publish free</strong><br><span class="muted" style="font-size:14px">Your listing goes live immediately. Upgrade to Featured if you want more visibility.</span></div>
           </div>
           <div style="display:flex;gap:12px;align-items:flex-start">
             <div style="width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;flex-shrink:0">4</div>
@@ -193,20 +193,20 @@
 
         <div class="renewal-box">
           <h3>📅 Renewal Reminders Included</h3>
-          <p style="margin-top:8px">Private seller listings run for <strong>30 days</strong> and do not auto-renew. You'll receive email reminders:</p>
+          <p style="margin-top:8px">Listings run for <strong>30 days</strong> and do not auto-renew. You'll receive email reminders:</p>
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
             <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:var(--gold);font-size:16px">●</span> 7 days before expiration</div>
             <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:orange;font-size:16px">●</span> 3 days before expiration</div>
             <div style="display:flex;align-items:center;gap:8px;font-size:14px"><span style="color:#d94040;font-size:16px">●</span> On the expiration day</div>
           </div>
-          <p class="muted" style="font-size:13px;margin-top:12px">Expired listings are hidden from public search but saved in your account for easy renewal.</p>
+          <p class="muted" style="font-size:13px;margin-top:12px">Expired listings are hidden from public search but saved in your account for easy free renewal.</p>
         </div>
       </div>
 
       <div class="panel" style="margin-top:20px;background:linear-gradient(145deg,#052e23,var(--green2));color:white;border:none">
         <h3 style="color:white;margin-bottom:8px">Private Seller Listing</h3>
-        <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:900;color:var(--gold2);margin-bottom:6px">$9.99</div>
-        <p style="color:#c8ecd6;font-size:14px;margin-bottom:16px">30-day listing · up to 20 photos · edit anytime · email reminders</p>
+        <div style="font-family:'Syne',sans-serif;font-size:42px;font-weight:900;color:var(--gold2);margin-bottom:6px">FREE</div>
+        <p style="color:#c8ecd6;font-size:14px;margin-bottom:16px">30-day listing · up to 20 photos · edit anytime · goes live immediately</p>
         <a href="pricing.html" style="color:#8bd45f;font-size:13px;font-weight:700">See all pricing options →</a>
       </div>
     </div>
@@ -217,42 +217,42 @@
 <div class="modal-overlay" id="payModal">
   <div class="modal" style="position:relative">
     <button class="modal-close" onclick="closeModal('payModal')">✕</button>
-    <h2>Review &amp; Pay</h2>
-    <p>Your listing is ready. Complete payment to publish it.</p>
-    <div style="background:#f4f8f6;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:20px" id="reviewSummary"></div>
+    <h2>Your listing is ready! 🎉</h2>
+    <p>Before you publish — want your cart to sell faster?</p>
+    <div style="background:#f4f8f6;border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0 20px" id="reviewSummary"></div>
 
-    <div style="margin-bottom:20px">
-      <label style="font-weight:700;font-size:14px;display:block;margin-bottom:10px">Choose listing type:</label>
-      <div style="display:flex;gap:10px">
-        <label style="flex:1;cursor:pointer" onclick="selectType('private')">
-          <div class="listing-type-card" id="cardPrivate" style="border:2px solid var(--green);border-radius:12px;padding:14px;text-align:center;background:#f4faf7;transition:.15s">
-            <div style="font-weight:800;font-size:18px;color:var(--green)">$9.99</div>
-            <div style="font-weight:700;font-size:13px;margin-top:2px">Standard</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">30 days</div>
-          </div>
-        </label>
-        <label style="flex:1;cursor:pointer" onclick="selectType('featured')">
-          <div class="listing-type-card" id="cardFeatured" style="border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;transition:.15s">
-            <div style="font-weight:800;font-size:18px;color:var(--gold2)">$19.99</div>
-            <div style="font-weight:700;font-size:13px;margin-top:2px">⭐ Featured</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">Homepage placement</div>
-          </div>
-        </label>
+    <!-- FEATURED UPSELL (emphasized) -->
+    <label style="cursor:pointer;display:block" onclick="selectType('featured')">
+      <div class="listing-type-card" id="cardFeatured" style="border:2.5px solid var(--gold);border-radius:14px;padding:18px;background:#fffbf0;transition:.15s;position:relative">
+        <span style="position:absolute;top:-11px;left:18px;background:var(--gold);color:#3a2c00;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.04em">⭐ RECOMMENDED</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-weight:800;font-size:17px;color:#1d2b1f">Featured Listing</div>
+          <div style="font-weight:900;font-size:22px;color:var(--gold2)">$4.99</div>
+        </div>
+        <div style="font-size:13.5px;color:var(--muted);line-height:1.7">
+          ⭐ <strong>Featured badge</strong> that makes buyers look twice<br>
+          🏠 <strong>Homepage placement</strong> — seen first by every visitor<br>
+          🔝 <strong>Top of search &amp; browse</strong> — above all free listings<br>
+          ⚡ Sells faster for less than the price of a coffee
+        </div>
       </div>
-    </div>
+    </label>
 
-    <!-- PROMO CODE -->
-    <div style="margin-bottom:20px">
-      <label style="font-weight:700;font-size:14px;display:block;margin-bottom:8px">Have a promo code?</label>
-      <div style="display:flex;gap:8px">
-        <input class="field" id="promoCode" placeholder="Enter code" style="text-transform:uppercase;flex:1">
-        <button class="btn btn-light" onclick="applyPromo()">Apply</button>
+    <div style="text-align:center;margin:14px 0;font-size:13px;color:var(--muted)">— or —</div>
+
+    <!-- FREE OPTION (secondary) -->
+    <label style="cursor:pointer;display:block" onclick="selectType('private')">
+      <div class="listing-type-card" id="cardPrivate" style="border:2px solid var(--green);border-radius:12px;padding:14px;background:#f4faf7;transition:.15s;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:15px;color:#1d2b1f">Standard Listing</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">30-day listing, up to 20 photos</div>
+        </div>
+        <div style="font-weight:800;font-size:16px;color:var(--green)">FREE</div>
       </div>
-      <p id="promoMsg" style="font-size:13px;margin-top:6px;display:none"></p>
-    </div>
+    </label>
 
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn btn-gold btn-lg" id="payBtn" onclick="confirmPayment()">Pay $9.99 and Publish</button>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+      <button class="btn btn-gold btn-lg" id="payBtn" onclick="confirmPayment()">Publish for Free 🎉</button>
       <button class="btn btn-light" onclick="closeModal('payModal')">Back to Edit</button>
     </div>
     <p id="payError" style="color:#d94040;font-size:13px;margin-top:10px;display:none"></p>
@@ -276,47 +276,14 @@ let validPromo = null;
 
 function selectType(type) {
   selectedType = type;
-  if(validPromo) {
+  document.getElementById('cardPrivate').style.borderColor = type === 'private' ? 'var(--green)' : 'var(--line)';
+  document.getElementById('cardPrivate').style.background = type === 'private' ? '#f4faf7' : '#fff';
+  document.getElementById('cardFeatured').style.borderColor = type === 'featured' ? 'var(--gold)' : 'var(--line)';
+  document.getElementById('cardFeatured').style.background = type === 'featured' ? '#fffbf0' : '#fff';
+  if(type === 'private') {
     document.getElementById('payBtn').textContent = 'Publish for Free 🎉';
-    return;
-  }
-  const prices = { private: '$9.99', featured: '$19.99' };
-  document.getElementById('payBtn').textContent = `Pay ${prices[type]} and Publish`;
-  document.getElementById('cardPrivate').style.border = type === 'private' ? '2px solid var(--green)' : '2px solid var(--line)';
-  document.getElementById('cardPrivate').style.background = type === 'private' ? '#f4faf7' : '';
-  document.getElementById('cardFeatured').style.border = type === 'featured' ? '2px solid var(--gold)' : '2px solid var(--line)';
-  document.getElementById('cardFeatured').style.background = type === 'featured' ? '#fffbf0' : '';
-}
-
-async function applyPromo() {
-  const code = document.getElementById('promoCode').value.trim().toUpperCase();
-  const msg = document.getElementById('promoMsg');
-  if(!code) return;
-
-  try {
-    const res = await fetch('/api/validate-promo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, listingType: 'private' })
-    });
-    const data = await res.json();
-    if(data.valid) {
-      validPromo = code;
-      msg.style.display = 'block';
-      msg.style.color = '#0d5b4a';
-      msg.textContent = '✅ Promo code applied — your listing is FREE!';
-      document.getElementById('payBtn').textContent = 'Publish for Free 🎉';
-      document.getElementById('payBtn').style.background = 'linear-gradient(160deg, #8bd45f, #5fa832)';
-    } else {
-      validPromo = null;
-      msg.style.display = 'block';
-      msg.style.color = '#d94040';
-      msg.textContent = data.error || 'Invalid or expired promo code.';
-    }
-  } catch(e) {
-    msg.style.display = 'block';
-    msg.style.color = '#d94040';
-    msg.textContent = 'Could not validate code. Please try again.';
+  } else {
+    document.getElementById('payBtn').textContent = 'Pay $4.99 and Publish';
   }
 }
 
@@ -357,8 +324,6 @@ function submitListing() {
       <span class="muted">Location</span><span>${document.getElementById('fLocation').value}, FL</span>
     </div>`;
   validPromo = null;
-  document.getElementById('promoCode').value = '';
-  document.getElementById('promoMsg').style.display = 'none';
   selectType('private');
   openModal('payModal');
 }
@@ -369,7 +334,7 @@ async function confirmPayment() {
   btn.disabled = true;
   errEl.style.display = 'none';
 
-  if(!validPromo) {
+  if(selectedType === 'featured') {
     btn.textContent = 'Redirecting to Stripe…';
   } else {
     btn.textContent = 'Publishing your listing…';
