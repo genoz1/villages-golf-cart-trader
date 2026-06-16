@@ -267,6 +267,7 @@ async function loadSellerListings() {
           <button class="btn btn-light btn-sm" onclick="openEdit('${l.id}','${l.price}','${l.status}',\`${(l.description||'').replace(/`/g,"'")}\`)">✏️ Edit</button>
           <button class="btn btn-light btn-sm" onclick="deleteListing('${l.id}')">🗑️ Remove</button>
           ${l.status === 'Active' ? `<a href="listing-detail.html?id=${l.id}" class="btn btn-green btn-sm" target="_blank">👁 View</a>` : ''}
+          ${l.status === 'Expired' ? `<button class="btn btn-gold btn-sm" onclick="renewListing('${l.id}')">🔄 Renew Free</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -333,6 +334,15 @@ async function deleteListing(id) {
   if(error) { showToast('Error removing listing.'); return; }
   showToast('Listing removed.');
   currentProfile.role === 'dealer' ? loadDealerListings() : loadSellerListings();
+}
+
+async function renewListing(id) {
+  const { error } = await sb.from('listings')
+    .update({ status: 'Active', created_at: new Date().toISOString(), days_left: 30 })
+    .eq('id', id);
+  if(error) { showToast('Could not renew listing.'); return; }
+  showToast('Listing renewed — live for another 30 days! 🎉');
+  loadSellerListings();
 }
 
 function previewDealerPhotos(input) {
