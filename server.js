@@ -107,15 +107,18 @@ app.post('/api/create-checkout', async (req, res) => {
       return res.status(400).json({ error: 'Listing data required' });
     }
 
-    // Validate promo code if provided
-    let isFree = false;
-    if(promoCode) {
+    // Standard private listings are now FREE and go live immediately.
+    // Only 'featured' and 'dealer' listings are paid.
+    let isFree = (listingType === 'private');
+
+    // (Promo codes still supported for paid tiers, e.g. featured, if ever needed)
+    if(!isFree && promoCode) {
       const { data: promo } = await supabase
         .from('promo_codes')
         .select('*')
         .eq('code', promoCode.toUpperCase())
         .eq('active', true)
-        .eq('listing_type', 'private')
+        .eq('listing_type', listingType)
         .single();
 
       if(promo && promo.uses < promo.max_uses) {
@@ -581,7 +584,8 @@ app.get('/sitemap.xml', async (req, res) => {
   const { data: listings } = await supabase
     .from('listings')
     .select('id, created_at')
-    .eq('status', 'Active');
+    .eq('status', 'Active')
+    .eq('is_sample', false);
 
   const staticPages = [
     { url: '/',               priority: '1.0', changefreq: 'daily'   },
