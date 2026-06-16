@@ -10,6 +10,36 @@ const Stripe   = require('stripe');
 const multer   = require('multer');
 const path     = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
+
+// ── Email (Zoho SMTP) ───────────────────────────────────────────────────────
+// Requires env vars: ZOHO_USER (info@villagesgolfcarttrader.com) and ZOHO_APP_PASSWORD
+const mailer = nodemailer.createTransport({
+  host: 'smtppro.zoho.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.ZOHO_USER,
+    pass: process.env.ZOHO_APP_PASSWORD,
+  },
+});
+
+async function sendMail(to, subject, html) {
+  if (!process.env.ZOHO_USER || !process.env.ZOHO_APP_PASSWORD) {
+    console.warn('Email skipped — ZOHO_USER / ZOHO_APP_PASSWORD not set');
+    return false;
+  }
+  try {
+    await mailer.sendMail({
+      from: `"Villages Golf Cart Trader" <${process.env.ZOHO_USER}>`,
+      to, subject, html,
+    });
+    return true;
+  } catch (err) {
+    console.error('Email send error:', err.message);
+    return false;
+  }
+}
 
 const app    = express();
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -575,6 +605,110 @@ app.get('/admin/stats', async (req, res) => {
     ${recentRows || '<tr><td colspan="5">No listings yet — go get those dealers! 🛺</td></tr>'}
   </table>
 </body></html>`);
+});
+
+// ── Listing renewal: reminders + expiration ─────────────────────────────────
+// Triggered daily by a scheduled job calling /api/run-renewals?key=ADMIN_KEY
+const LISTING_DAYS = 30;
+
+function renewEmailHtml(listing, daysLeft, renewUrl) {
+  const headline = daysLeft > 0
+    ? `Your listing expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+    : `Your listing has expired`;
+  const body = daysLeft > 0
+    ? `Your free listing for the <strong>${listing.title}</strong> will expire in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. If it's still for sale, renew it free below to keep it visible to local buyers.`
+    : `Your free listing for the <strong>${listing.title}</strong> has reached 30 days and is no longer shown publicly. It's saved in your account — renew it free below to make it live again.`;
+  return `<div style="font-family:-apple-system,system-ui,sans-serif;max-width:520px;margin:0 auto;color:#1d2b1f">
+    <div style="background:#1f3a24;padding:20px;text-align:center;border-radius:10px 10px 0 0">
+      <span style="color:#fff;font-size:18px;font-weight:700">🛺 Villages Golf Cart Trader</span>
+    </div>
+    <div style="border:1px solid #dde3da;border-top:none;border-radius:0 0 10px 10px;padding:24px">
+      <h2 style="margin:0 0 12px">${headline}</h2>
+      <p style="line-height:1.6;color:#4a584b">${body}</p>
+      <p style="text-align:center;margin:24px 0">
+        <a href="${renewUrl}" style="background:#6aa84f;color:#fff;text-decoration:none;font-weight:700;padding:12px 28px;border-radius:8px;display:inline-block">Renew Free →</a>
+      </p>
+      <p style="font-size:13px;color:#8a978b">Already sold it? You can ignore this email — the listing will simply expire on its own.</p>
+    </div>
+  </div>`;
+}
+
+app.get('/api/run-renewals', async (req, res) => {
+  if (!process.env.ADMIN_KEY || req.query.key !== process.env.ADMIN_KEY) {
+    return res.status(404).send('Not found');
+  }
+
+  const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
+  const now = Date.now();
+  const DAY = 24 * 60 * 60 * 1000;
+
+  // Pull active, real (non-sample) listings
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'Active')
+    .eq('is_sample', false);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  let reminders7 = 0, reminders3 = 0, expired = 0;
+
+  for (const l of (data || [])) {
+    if (!l.created_at) continue;
+    const ageDays = Math.floor((now - new Date(l.created_at).getTime()) / DAY);
+    const daysLeft = LISTING_DAYS - ageDays;
+    const renewUrl = `${siteUrl}/api/renew-listing?id=${l.id}&token=${l.id}`;
+
+    if (ageDays >= LISTING_DAYS) {
+      // Expire: hide from public, keep saved
+      await supabase.from('listings').update({ status: 'Expired' }).eq('id', l.id);
+      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing has expired', renewEmailHtml(l, 0, renewUrl));
+      expired++;
+    } else if (daysLeft === 3) {
+      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing expires in 3 days', renewEmailHtml(l, 3, renewUrl));
+      reminders3++;
+    } else if (daysLeft === 7) {
+      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing expires in 7 days', renewEmailHtml(l, 7, renewUrl));
+      reminders7++;
+    }
+  }
+
+  res.json({ ok: true, reminders7, reminders3, expired });
+});
+
+// One-click renewal — resets the 30-day clock and reactivates if expired
+app.get('/api/renew-listing', async (req, res) => {
+  const { id, token } = req.query;
+  // Lightweight token check (the listing id doubles as the token in the emailed link)
+  if (!id || token !== String(id)) {
+    return res.status(400).send('Invalid renewal link.');
+  }
+
+  const { data: listing, error: findErr } = await supabase
+    .from('listings').select('id, title').eq('id', id).single();
+
+  if (findErr || !listing) return res.status(404).send('Listing not found.');
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ status: 'Active', created_at: new Date().toISOString(), days_left: LISTING_DAYS })
+    .eq('id', id);
+
+  if (error) return res.status(500).send('Could not renew listing.');
+
+  const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
+  res.send(`<!doctype html><html><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Listing Renewed</title>
+    <style>body{font-family:-apple-system,system-ui,sans-serif;background:#f6f7f4;color:#1d2b1f;text-align:center;padding:60px 20px}
+    .box{background:#fff;border:1px solid #dde3da;border-radius:14px;max-width:440px;margin:0 auto;padding:32px}
+    a{background:#6aa84f;color:#fff;text-decoration:none;font-weight:700;padding:11px 24px;border-radius:8px;display:inline-block;margin-top:16px}</style>
+    </head><body><div class="box">
+    <div style="font-size:44px">✅</div>
+    <h1 style="font-size:22px">Listing renewed!</h1>
+    <p style="color:#4a584b;line-height:1.6">Your listing for <strong>${String(listing.title).replace(/</g,'&lt;')}</strong> is live again for another 30 days.</p>
+    <a href="${siteUrl}/listing-detail.html?id=${listing.id}">View your listing →</a>
+    </div></body></html>`);
 });
 
 // ── GET /sitemap.xml ────────────────────────────────────────────────────────
