@@ -25,7 +25,7 @@
     <div class="plan-card featured">
       <span class="tag tag-gold">🎉 Always Free</span>
       <h2 style="margin-top:12px;font-size:22px">Private Seller</h2>
-      <div class="price">FREE</div>
+      <div class="price" style="letter-spacing:-5px;line-height:1">FREE</div>
       <p style="color:var(--muted);font-size:13px;margin-bottom:16px">30-day listing · no cost</p>
       <ul class="plan-features">
         <li>30-day active listing</li>
@@ -41,7 +41,7 @@
     <div class="plan-card">
       <span class="tag">⭐ Most Visible</span>
       <h2 style="margin-top:12px;font-size:22px">Featured Listing</h2>
-      <div class="price">$4.99</div>
+      <div class="price" style="letter-spacing:-2px;line-height:1">$4.99</div>
       <p style="color:var(--muted);font-size:13px;margin-bottom:16px">One-time · 30-day listing</p>
       <ul class="plan-features">
         <li>Everything in the free listing</li>
@@ -56,7 +56,7 @@
     <div class="plan-card">
       <span class="tag tag-blue">🏪 Dealers</span>
       <h2 style="margin-top:12px;font-size:22px">Dealer Starter</h2>
-      <div class="price" style="font-size:32px">$49<span style="font-size:16px;font-weight:500;color:var(--muted)">/mo</span></div>
+      <div class="price" style="font-size:32px;letter-spacing:-1px;line-height:1">$49<span style="font-size:16px;font-weight:500;color:var(--muted)">/mo</span></div>
       <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Monthly subscription · Cancel anytime</p>
       <ul class="plan-features">
         <li>Dealer profile page</li>
@@ -76,7 +76,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px">
       <div>
         <strong style="font-size:15px">Private Sellers</strong>
-        <p style="margin-top:6px">Free listings run for <strong>30 days</strong> and do not auto-renew. Sellers are notified <strong>7 days before expiration</strong>, <strong>3 days before expiration</strong>, and <strong>on the expiration day</strong> — so they can renew for free, mark sold, or let the ad expire.</p>
+        <p style="margin-top:6px">30-day listings do not auto-renew. Sellers are notified <strong>7 days before expiration</strong>, <strong>3 days before expiration</strong>, and <strong>on the expiration day</strong> — so they can renew, mark sold, or let the ad expire.</p>
       </div>
       <div>
         <strong style="font-size:15px">Dealers</strong>
@@ -102,9 +102,9 @@ document.getElementById('footer-root').innerHTML = renderFooter();
 initNav();
 
 const faqs = [
-  ['Is it really free to list?', 'Yes — standard private seller listings are completely free and go live immediately. You only pay if you choose the optional $4.99 Featured upgrade.'],
-  ['What does Featured do?', 'A Featured listing gets homepage placement, a ⭐ badge, and priority position at the top of search and browse — above all free listings.'],
-  ['What happens when my listing expires?', 'After 30 days it\'s hidden from public search but saved in your account. You can renew it for free with one click — no need to recreate it.'],
+  ['Can I edit my listing after publishing?', 'Yes — you can update the price, description, photos, or location at any time from your account dashboard.'],
+  ['What happens when my listing expires?', 'It\'s hidden from public search but saved in your account. You can renew it for another 30 days with one click — no need to recreate it.'],
+  ['Will I be charged automatically?', 'No. Private seller listings are free and never auto-charge. You\'ll receive reminder emails and can choose to renew manually.'],
   ['How do buyers contact me?', 'Buyers send a message through the listing form. Your phone number and email are never shown publicly.'],
   ['Can I mark a listing as sold?', 'Yes — from your account dashboard you can mark any listing as sold, which removes it from public view.'],
   ['Do dealers auto-renew?', 'Yes, dealer subscriptions are monthly and auto-renew until you cancel. You can cancel anytime from your account.'],
