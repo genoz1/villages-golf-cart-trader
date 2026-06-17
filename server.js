@@ -119,7 +119,7 @@ app.post('/api/validate-promo', async (req, res) => {
   if(data.uses >= data.max_uses) {
     const msg = data.listing_type === 'dealer'
       ? 'Sorry, this promo code has been claimed by all 5 dealers. You can still sign up for just $49/month — cancel anytime!'
-      : 'Sorry, this promo code has been claimed by all 20 sellers. You can still list your cart for just $9.99 for 30 days!';
+      : 'Sorry, this promo code has been claimed by all 20 sellers. You can still list your cart for free!';
     return res.json({ valid: false, error: msg });
   }
 
@@ -163,6 +163,27 @@ app.post('/api/create-checkout', async (req, res) => {
     const priceId = PRICES[listingType];
     if (!priceId && !isFree) {
       return res.status(400).json({ error: `Unknown listing type: ${listingType}` });
+    }
+
+    // Free-listing limit: a private seller may have at most 2 active free listings.
+    // This keeps the free tier for genuine private sellers and nudges multi-cart
+    // dealers toward the paid Dealer plan.
+    const FREE_LISTING_LIMIT = 2;
+    if (isFree && listingType === 'private' && listing.email) {
+      const { count } = await supabase
+        .from('listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('seller_email', listing.email)
+        .eq('listing_type', 'Local')
+        .eq('is_sample', false)
+        .in('status', ['Active', 'Expired']);
+
+      if ((count || 0) >= FREE_LISTING_LIMIT) {
+        return res.status(403).json({
+          limitReached: true,
+          error: `You've reached the limit of ${FREE_LISTING_LIMIT} free listings. Got more carts to sell? Our Dealer plan offers unlimited listings, a dealer badge, and a profile page for $49/month — cancel anytime.`,
+        });
+      }
     }
 
     const { data, error } = await supabase
