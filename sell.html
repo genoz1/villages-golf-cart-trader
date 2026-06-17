@@ -379,12 +379,20 @@ async function confirmPayment() {
       window.location.href = data.url;
     } else if(data.free) {
       window.location.href = `success.html?listing=${data.listingId}&free=1`;
+    } else if(data.limitReached) {
+      btn.disabled = false;
+      selectType(selectedType);
+      errEl.innerHTML = `${data.error} <a href="dealer-signup.html" style="color:var(--green);font-weight:700;text-decoration:underline">See the Dealer plan →</a>`;
+      errEl.style.color = 'var(--ink)';
+      errEl.style.display = 'block';
+      return;
     } else {
       throw new Error(data.error || 'Could not create checkout session');
     }
   } catch(err) {
     btn.disabled = false;
     selectType(selectedType);
+    errEl.style.color = '#d94040';
     errEl.textContent = `Error: ${err.message}`;
     errEl.style.display = 'block';
   }
