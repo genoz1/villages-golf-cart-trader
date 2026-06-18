@@ -57,7 +57,7 @@ function renderNav(activePage) {
   ).join('');
 
   return `
-  <div class="topbar">The Villages paid golf cart marketplace — private sellers &amp; dealers</div>
+  <div class="topbar">The Villages golf cart marketplace — free to list for private sellers</div>
   <header class="nav">
     <div class="nav-inner">
       <a class="brand-text" href="index.html">Villages Golf Cart Trader</a>
@@ -79,7 +79,7 @@ function renderFooter() {
     <div class="footer-inner">
       <div>
         <div class="footer-brand">Villages Golf Cart Trader</div>
-        <p class="footer-tagline">The paid golf cart marketplace for The Villages and surrounding communities. Private sellers and dealers welcome.</p>
+        <p class="footer-tagline">The local golf cart marketplace for The Villages and surrounding communities — free to list. Private sellers and dealers welcome.</p>
       </div>
       <div>
         <h4>Marketplace</h4>
