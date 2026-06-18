@@ -87,7 +87,7 @@
 
         <div class="form-group">
           <label>Asking Price *</label>
-          <input class="field" id="fPrice" placeholder="$" type="number" min="0">
+          <input class="field" id="fPrice" placeholder="e.g. 9500" type="number" min="300" max="200000">
         </div>
 
         <div class="form-group">
@@ -312,6 +312,18 @@ function submitListing() {
       document.getElementById(id).focus();
       return;
     }
+  }
+  // Sanity-check the price so typos like "9" instead of "9500" don't slip through
+  const priceVal = parseInt(document.getElementById('fPrice').value, 10);
+  if(isNaN(priceVal) || priceVal < 300) {
+    showToast('Please enter a realistic price (at least $300).');
+    document.getElementById('fPrice').focus();
+    return;
+  }
+  if(priceVal > 200000) {
+    showToast('That price looks too high — please double-check it.');
+    document.getElementById('fPrice').focus();
+    return;
   }
   const autoTitle = `${document.getElementById('fYear').value} ${document.getElementById('fMake').value} ${document.getElementById('fModel').value}`;
   const summary = document.getElementById('reviewSummary');
