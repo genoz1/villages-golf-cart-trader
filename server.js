@@ -574,7 +574,7 @@ app.get('/admin/stats', async (req, res) => {
 
   const { data, error } = await supabase
     .from('listings')
-    .select('id, title, price, location, listing_type, status, created_at')
+    .select('id, title, price, location, listing_type, status, created_at, seller_name, seller_email, seller_phone')
     .eq('is_sample', false)
     .order('created_at', { ascending: false });
 
@@ -591,14 +591,21 @@ app.get('/admin/stats', async (req, res) => {
     total:     all.length,
   };
 
-  const recentRows = all.slice(0, 15).map(l => `
+  const recentRows = all.slice(0, 15).map(l => {
+    const email = String(l.seller_email || '').replace(/</g, '&lt;');
+    const phone = String(l.seller_phone || '').replace(/</g, '&lt;');
+    return `
     <tr>
       <td>${new Date(l.created_at).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
       <td>${String(l.title || '').replace(/</g, '&lt;')}</td>
       <td>$${Number(l.price).toLocaleString()}</td>
       <td>${String(l.location || '').replace(/</g, '&lt;')}</td>
       <td>${l.status}</td>
-    </tr>`).join('');
+      <td>${String(l.seller_name || '').replace(/</g, '&lt;')}</td>
+      <td>${email ? `<a href="mailto:${email}">${email}</a>` : '—'}</td>
+      <td>${phone || '—'}</td>
+    </tr>`;
+  }).join('');
 
   res.send(`<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -611,6 +618,7 @@ app.get('/admin/stats', async (req, res) => {
   table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dde3da;border-radius:10px;overflow:hidden}
   th,td{padding:9px 12px;text-align:left;font-size:14px;border-bottom:1px solid #eef1ec}
   th{background:#f0f3ee;color:#4a584b} caption{text-align:left;font-weight:600;margin:8px 0;font-size:16px}
+  a{color:#2a7d5f}
 </style></head><body>
   <h1>🛺 Villages Golf Cart Trader — Listing Stats</h1>
   <div class="cards">
@@ -622,8 +630,8 @@ app.get('/admin/stats', async (req, res) => {
   </div>
   <table>
     <caption>15 most recent listings</caption>
-    <tr><th>Posted (ET)</th><th>Title</th><th>Price</th><th>Location</th><th>Status</th></tr>
-    ${recentRows || '<tr><td colspan="5">No listings yet — go get those dealers! 🛺</td></tr>'}
+    <tr><th>Posted (ET)</th><th>Title</th><th>Price</th><th>Location</th><th>Status</th><th>Seller</th><th>Email</th><th>Phone</th></tr>
+    ${recentRows || '<tr><td colspan="8">No listings yet — go get those dealers! 🛺</td></tr>'}
   </table>
 </body></html>`);
 });
