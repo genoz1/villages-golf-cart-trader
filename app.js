@@ -1,3 +1,13 @@
+// ── Meta Pixel ──────────────────────────────────────────────────────────────
+// Loads on every page (app.js is included site-wide) and fires a PageView.
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '2249036495903204');
+fbq('track', 'PageView');
+
 // ── DATA STORE ─────────────────────────────────────────────────────────────
 const LISTINGS = [
   { id:1, title:"2022 Club Car Onward Lithium", price:12995, make:"Club Car", model:"Onward", year:2022, power:"Lithium", seats:4, location:"The Villages", type:"Featured", status:"Active", photo:"https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600&q=80", daysLeft:27, streetLegal:true, seller:"John M.", phone:"(352) 555-0101", desc:"Clean 4-passenger lithium cart with upgraded premium seats, full LED lighting package, fold-down windshield, side mirrors, rear seat flip kit, and chrome accents. Garage kept, lightly used in The Villages. Runs perfectly." },
