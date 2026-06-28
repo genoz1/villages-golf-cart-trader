@@ -52,7 +52,13 @@ const supabase = createClient(
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: process.env.SITE_URL || 'http://localhost:3000' }));
-app.use(express.json());
+// IMPORTANT: Stripe webhook signature verification needs the RAW request body.
+// express.json() would parse/re-serialize it and break the signature, so we
+// skip JSON parsing for the webhook path and let its own express.raw() handle it.
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/stripe-webhook') return next();
+  express.json()(req, res, next);
+});
 app.use(express.static(path.join(__dirname)));
 
 // Photo uploads — use memory storage then upload to Supabase Storage
@@ -119,7 +125,7 @@ app.post('/api/validate-promo', async (req, res) => {
   if(data.uses >= data.max_uses) {
     const msg = data.listing_type === 'dealer'
       ? 'Sorry, this promo code has been claimed by all 5 dealers. You can still sign up for just $49/month — cancel anytime!'
-      : 'Sorry, this promo code has been claimed by all 20 sellers. You can still list your cart for free!';
+      : 'Sorry, this promo code has been claimed by all 20 sellers. You can still list your cart for just $9.99 for 30 days!';
     return res.json({ valid: false, error: msg });
   }
 
@@ -471,9 +477,20 @@ const xmlEscape = (s = '') => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 
+// Rewrite a Supabase Storage URL to request a resized version so social platforms
+// (Facebook caps images at 4MB) never receive an oversized photo. Uses Supabase's
+// image transformation endpoint: /storage/v1/object/public/  ->  /storage/v1/render/image/public/
+function feedImage(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('/storage/v1/object/public/')) return url; // not a Supabase storage URL; leave as-is
+  const rendered = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+  const sep = rendered.includes('?') ? '&' : '?';
+  return `${rendered}${sep}width=1200&quality=75`;
+}
+
 function rssItem(l, siteUrl, guid, pubDate) {
   const link  = `${siteUrl}/listing-detail.html?id=${l.id}`;
-  const photo = (Array.isArray(l.photo_urls) && l.photo_urls[0]) || `${siteUrl}/assets/hero-logo.png`;
+  const photo = feedImage((Array.isArray(l.photo_urls) && l.photo_urls[0]) || `${siteUrl}/assets/hero-logo.png`);
   const price = Number(l.price).toLocaleString('en-US');
   const bits  = [l.power, l.seats ? `${l.seats} seats` : null, l.street_legal ? 'street legal' : null]
     .filter(Boolean).join(' • ');
@@ -618,7 +635,6 @@ app.get('/admin/stats', async (req, res) => {
   table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dde3da;border-radius:10px;overflow:hidden}
   th,td{padding:9px 12px;text-align:left;font-size:14px;border-bottom:1px solid #eef1ec}
   th{background:#f0f3ee;color:#4a584b} caption{text-align:left;font-weight:600;margin:8px 0;font-size:16px}
-  a{color:#2a7d5f}
 </style></head><body>
   <h1>🛺 Villages Golf Cart Trader — Listing Stats</h1>
   <div class="cards">
