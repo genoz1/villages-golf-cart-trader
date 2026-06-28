@@ -166,18 +166,27 @@ function normalize(l) {
   };
 }
 
+const FEATURED_SLOTS = 3; // how many cards to show in the Featured row
+
 async function loadListings() {
   try {
     const res  = await fetch('/api/listings');
     const data = await res.json();
-    const listings = data.map(normalize);
+    // API returns Active listings newest-first. Drop any samples just in case.
+    const listings = data.map(normalize).filter(l => !l.isSample);
 
-    const featured = listings.filter(l => l.type === 'Featured');
-    const latest   = listings.slice(0, 3);
+    // Featured section: real Featured carts first (with badge), then backfill
+    // the remaining slots with the newest non-featured real listings.
+    const featuredCarts = listings.filter(l => l.type === 'Featured');
+    const backfill      = listings.filter(l => l.type !== 'Featured');
+    const featuredRow   = [...featuredCarts, ...backfill].slice(0, FEATURED_SLOTS);
 
-    document.getElementById('featuredGrid').innerHTML = featured.length
-      ? featured.map(l => makeCard(l, true)).join('')
-      : '<p class="muted" style="padding:20px">No featured listings yet.</p>';
+    // Latest section: the 6 newest real listings.
+    const latest = listings.slice(0, 6);
+
+    document.getElementById('featuredGrid').innerHTML = featuredRow.length
+      ? featuredRow.map(l => makeCard(l, true)).join('')
+      : '<p class="muted" style="padding:20px">No listings yet — be the first to post!</p>';
 
     document.getElementById('latestGrid').innerHTML = latest.length
       ? latest.map(l => makeCard(l, false)).join('')
