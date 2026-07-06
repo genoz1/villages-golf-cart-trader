@@ -8,6 +8,23 @@ document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '2249036495903204');
 fbq('track', 'PageView');
 
+// ── IMAGE RESIZING ─────────────────────────────────────────────────────────
+// Sellers often upload full-resolution phone photos (several MB each, up to
+// the 10MB/photo limit) — serving those originals directly to every visitor
+// on every listing card is what was driving excess Supabase bandwidth usage.
+// This rewrites Supabase Storage URLs to request a resized/compressed version
+// via Supabase's built-in image transformation endpoint instead of the raw
+// original. Non-Supabase URLs (e.g. the Unsplash sample-listing photos) pass
+// through untouched. Same technique already used for the Facebook/RSS feed
+// (see feedImage() in server.js) — now applied site-wide too.
+function resizeImg(url, width) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('/storage/v1/object/public/')) return url;
+  const rendered = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+  const sep = rendered.includes('?') ? '&' : '?';
+  return `${rendered}${sep}width=${width}&quality=75`;
+}
+
 // ── DATA STORE ─────────────────────────────────────────────────────────────
 const LISTINGS = [
   { id:1, title:"2022 Club Car Onward Lithium", price:12995, make:"Club Car", model:"Onward", year:2022, power:"Lithium", seats:4, location:"The Villages", type:"Featured", status:"Active", photo:"https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?w=600&q=80", daysLeft:27, streetLegal:true, seller:"John M.", phone:"(352) 555-0101", desc:"Clean 4-passenger lithium cart with upgraded premium seats, full LED lighting package, fold-down windshield, side mirrors, rear seat flip kit, and chrome accents. Garage kept, lightly used in The Villages. Runs perfectly." },
