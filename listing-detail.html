@@ -106,7 +106,7 @@ const urlId = new URLSearchParams(location.search).get('id');
 
 function setMainPhoto(url, title) {
   const photoMain = document.getElementById('photoMain');
-  photoMain.innerHTML = `<img src="${url}" alt="${title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
+  photoMain.innerHTML = `<img src="${resizeImg(url, 1000)}" alt="${title}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🛺'">`;
 }
 
 function populateListing(l) {
@@ -125,7 +125,7 @@ function populateListing(l) {
   if(photos.length > 1) {
     thumbsContainer.innerHTML = photos.map((url, i) => `
       <div class="thumb ${i===0?'active':''}" onclick="switchPhoto('${url}', '${l.title}', this)">
-        <img src="${url}" alt="Photo ${i+1}" onerror="this.parentElement.textContent='📸'">
+        <img src="${resizeImg(url, 150)}" alt="Photo ${i+1}" onerror="this.parentElement.textContent='📸'">
       </div>
     `).join('');
   } else {
@@ -224,7 +224,7 @@ async function loadListing() {
 
 function renderSimilar(items, fromDb) {
   document.getElementById('similarGrid').innerHTML = items.map(l => {
-    const photo = fromDb ? ((l.photo_urls && l.photo_urls[0]) || '') : (l.photo || '');
+    const photo = resizeImg(fromDb ? ((l.photo_urls && l.photo_urls[0]) || '') : (l.photo || ''), 400);
     const type  = fromDb ? (l.listing_type || 'Local') : (l.type || 'Local');
     return `
     <article class="card">
