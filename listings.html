@@ -170,7 +170,7 @@ function normalize(l) {
     streetLegal: l.street_legal,
     location:    l.location,
     type:        l.listing_type === 'Featured' ? 'Featured' : l.listing_type === 'Dealer' ? 'Dealer' : 'Local',
-    photo:       (l.photo_urls && l.photo_urls[0]) || '',
+    photo:       resizeImg((l.photo_urls && l.photo_urls[0]) || '', 400),
     isSample:    l.is_sample || false,
     daysLeft:    l.days_left || 30,
     status:      l.status,
