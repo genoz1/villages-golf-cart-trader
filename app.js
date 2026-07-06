@@ -155,4 +155,98 @@ function initNav() {
   document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); });
   });
+}function getListingId() {
+  const p = new URLSearchParams(location.search);
+  return parseInt(p.get('id')) || 1;
+}
+
+// ── NAV ─────────────────────────────────────────────────────────────────────
+function renderNav(activePage) {
+  const pages = [
+    ['listings.html','Browse Carts'],
+    ['sell.html','Sell Your Cart'],
+    ['dealers.html','Dealers'],
+    ['pricing.html','Pricing'],
+    ['contact.html','Contact'],
+    ['account.html','My Account'],
+  ];
+  const links = pages.map(([href,label]) =>
+    `<a href="${href}" class="${activePage===href?'active':''}">${label}</a>`
+  ).join('');
+  const mobileLinks = pages.map(([href,label]) =>
+    `<a href="${href}">${label}</a>`
+  ).join('');
+
+  return `
+  <div class="topbar">The Villages golf cart marketplace — free to list for private sellers</div>
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand-text" href="index.html">Villages Golf Cart Trader</a>
+      <nav class="nav-links">${links}</nav>
+      <a class="btn btn-gold btn-sm nav-cta" href="sell.html">Post Your Cart</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <nav class="mobile-nav" id="mobileNav">${mobileLinks}
+      <a href="sell.html" class="btn btn-gold" style="margin-top:6px">Post Your Cart</a>
+    </nav>
+  </header>`;
+}
+
+function renderFooter() {
+  return `
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand">Villages Golf Cart Trader</div>
+        <p class="footer-tagline">The local golf cart marketplace for The Villages and surrounding communities — free to list. Private sellers and dealers welcome.</p>
+      </div>
+      <div>
+        <h4>Marketplace</h4>
+        <ul class="footer-links">
+          <li><a href="listings.html">Browse Carts</a></li>
+          <li><a href="sell.html">Sell Your Cart</a></li>
+          <li><a href="dealers.html">Dealers</a></li>
+          <li><a href="account.html">My Account</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Info</h4>
+        <ul class="footer-links">
+          <li><a href="pricing.html">Pricing</a></li>
+          <li><a href="listing-renewal-rules.html">Renewal Rules</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Communities</h4>
+        <ul class="footer-links">
+          <li><a href="listings.html">The Villages</a></li>
+          <li><a href="listings.html">Lady Lake</a></li>
+          <li><a href="listings.html">Wildwood</a></li>
+          <li><a href="listings.html">Oxford</a></li>
+          <li><a href="listings.html">Leesburg</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Villages Golf Cart Trader. All rights reserved.</span>
+      <span>villagesgolfcarttrader.com</span>
+    </div>
+  </footer>
+  <div class="toast" id="toast"></div>`;
+}
+
+function initNav() {
+  const btn = document.getElementById('hamburger');
+  const nav = document.getElementById('mobileNav');
+  if(btn && nav) {
+    btn.addEventListener('click', () => nav.classList.toggle('open'));
+  }
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); });
+  });
 }
