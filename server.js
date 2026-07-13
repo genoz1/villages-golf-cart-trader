@@ -683,42 +683,11 @@ app.get('/api/run-renewals', async (req, res) => {
     return res.status(404).send('Not found');
   }
 
-  const siteUrl = process.env.SITE_URL || 'https://villagesgolfcarttrader.com';
-  const now = Date.now();
-  const DAY = 24 * 60 * 60 * 1000;
-
-  // Pull active, real (non-sample) listings
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('status', 'Active')
-    .eq('is_sample', false);
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  let reminders7 = 0, reminders3 = 0, expired = 0;
-
-  for (const l of (data || [])) {
-    if (!l.created_at) continue;
-    const ageDays = Math.floor((now - new Date(l.created_at).getTime()) / DAY);
-    const daysLeft = LISTING_DAYS - ageDays;
-    const renewUrl = `${siteUrl}/api/renew-listing?id=${l.id}&token=${l.id}`;
-
-    if (ageDays >= LISTING_DAYS) {
-      // Expire: hide from public, keep saved
-      await supabase.from('listings').update({ status: 'Expired' }).eq('id', l.id);
-      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing has expired', renewEmailHtml(l, 0, renewUrl));
-      expired++;
-    } else if (daysLeft === 3) {
-      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing expires in 3 days', renewEmailHtml(l, 3, renewUrl));
-      reminders3++;
-    } else if (daysLeft === 7) {
-      if (l.seller_email) await sendMail(l.seller_email, 'Your golf cart listing expires in 7 days', renewEmailHtml(l, 7, renewUrl));
-      reminders7++;
-    }
-  }
-
-  res.json({ ok: true, reminders7, reminders3, expired });
+  // ── Expiration temporarily disabled ────────────────────────────────────────
+  // Listings stay active indefinitely until inventory grows large enough that
+  // stale listings become a real problem. Re-enable by restoring the loop below.
+  // ──────────────────────────────────────────────────────────────────────────
+  res.json({ ok: true, message: 'Expiration disabled — listings stay active until manually removed.', reminders7: 0, reminders3: 0, expired: 0 });
 });
 
 // One-click renewal — resets the 30-day clock and reactivates if expired
