@@ -740,6 +740,7 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/listings.html',  priority: '0.9', changefreq: 'hourly'  },
     { url: '/sell.html',      priority: '0.8', changefreq: 'monthly' },
     { url: '/dealers.html',   priority: '0.7', changefreq: 'weekly'  },
+    { url: '/founder.html',   priority: '0.5', changefreq: 'monthly' },
   ];
 
   const listingPages = (listings || []).map(l => ({
