@@ -50,6 +50,72 @@ const supabase = createClient(
   process.env.SUPABASE_SECRET_KEY
 );
 
+// ── AI photo ranker ─────────────────────────────────────────────────────────
+// Reorders photo URLs so the best full-cart shot is first.
+// Called after upload so the cover photo and RSS/social feed always show
+// the whole cart rather than a close-up detail.
+async function rankCartPhotos(urls) {
+  if (!urls || urls.length <= 1) return urls;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn('ANTHROPIC_API_KEY not set — skipping photo ranking');
+    return urls;
+  }
+
+  try {
+    // Cap at 8 images to keep the API call fast
+    const candidates = urls.slice(0, 8);
+
+    const imageBlocks = candidates.flatMap((url, i) => [
+      { type: 'image', source: { type: 'url', url } },
+      { type: 'text',  text: `Image ${i + 1}` },
+    ]);
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':      'application/json',
+        'x-api-key':         process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model:      'claude-sonnet-4-6',
+        max_tokens: 16,
+        messages: [{
+          role: 'user',
+          content: [
+            ...imageBlocks,
+            {
+              type: 'text',
+              text: 'These are photos of a golf cart listing. Which image number shows the most complete view of the ENTIRE golf cart from the outside (not a close-up of a detail, interior, or accessory)? Reply with ONLY the number.',
+            },
+          ],
+        }],
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn('Photo ranking API error:', response.status);
+      return urls;
+    }
+
+    const data  = await response.json();
+    const text  = (data.content?.[0]?.text || '').trim();
+    const pick  = parseInt(text, 10) - 1;
+
+    if (pick > 0 && pick < candidates.length) {
+      // Move the winning photo to position 0; keep all others in original order
+      const reordered = [...urls];
+      const [best] = reordered.splice(pick, 1);
+      return [best, ...reordered];
+    }
+
+    return urls; // index 0 already the best, or parse failed — leave as-is
+  } catch (err) {
+    console.warn('Photo ranking failed, using original order:', err.message);
+    return urls;
+  }
+}
+
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({ origin: process.env.SITE_URL || 'http://localhost:3000' }));
 // IMPORTANT: Stripe webhook signature verification needs the RAW request body.
@@ -101,7 +167,10 @@ app.post('/api/upload-photos', upload.array('photos', 20), async (req, res) => {
       return data.publicUrl;
     }));
 
-    res.json({ urls });
+    // Reorder so the best full-cart shot is first (used as cover + social feed image)
+    const ranked = await rankCartPhotos(urls);
+
+    res.json({ urls: ranked });
   } catch (err) {
     console.error('Upload error:', err.message);
     res.status(500).json({ error: err.message });
@@ -740,7 +809,6 @@ app.get('/sitemap.xml', async (req, res) => {
     { url: '/listings.html',  priority: '0.9', changefreq: 'hourly'  },
     { url: '/sell.html',      priority: '0.8', changefreq: 'monthly' },
     { url: '/dealers.html',   priority: '0.7', changefreq: 'weekly'  },
-    { url: '/founder.html',   priority: '0.5', changefreq: 'monthly' },
   ];
 
   const listingPages = (listings || []).map(l => ({
